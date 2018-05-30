@@ -1,10 +1,4 @@
-mod compile;
-mod interpret;
-mod run;
-
-pub use options::compile::CompileOptions;
-pub use options::interpret::InterpretOptions;
-pub use options::run::RunOptions;
+use std::path::PathBuf;
 
 #[derive(Debug, StructOpt)]
 #[structopt(raw(setting = "::structopt::clap::AppSettings::ColoredHelp"))]
@@ -13,13 +7,17 @@ pub struct Options {
     #[structopt(short = "q", long = "quiet")]
     pub quiet: bool,
 
-    /// Increases the verbosity. Default verbosity is errors only.
+    /// Increases the verbosity. Default verbosity is errors and warnings.
     #[structopt(short = "v", long = "verbose", parse(from_occurrences))]
     pub verbose: usize,
 
-    /// The subcommand to run.
-    #[structopt(subcommand)]
-    pub subcommand: Subcommand,
+    /// A file to load declarations from.
+    #[structopt(short = "d", long = "decls", name = "FILE", parse(from_os_str))]
+    pub decls_path: Option<PathBuf>,
+
+    /// The expression to evaluate. If not present, a REPL will be started.
+    #[structopt(short = "e", long = "expr", name = "EXPR")]
+    pub expr: Option<String>,
 }
 
 impl Options {
@@ -32,19 +30,14 @@ impl Options {
             }
         }
     }
-}
 
-#[derive(Debug, StructOpt)]
-pub enum Subcommand {
-    /// Precompiles a program.
-    #[structopt(name = "compile")]
-    Compile(CompileOptions),
+    #[cfg(debug_assertions)]
+    pub fn setup_panic(&self) {}
 
-    /// Interprets a precompiled program.
-    #[structopt(name = "interpret")]
-    Interpret(InterpretOptions),
-
-    /// Runs a program.
-    #[structopt(name = "run")]
-    Run(RunOptions),
+    #[cfg(not(debug_assertions))]
+    pub fn setup_panic(&self) {
+        if self.verbose == 0 {
+            setup_panic!();
+        }
+    }
 }

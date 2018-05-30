@@ -1,38 +1,37 @@
 use symbol::Symbol;
 
-use ast::Literal;
-use cst::{Decl, Expr, Pattern};
+use ast::{Literal, Op, Pattern};
+use cst::{Decl, Expr};
 
 grammar;
 
-// pub Decls: (Vec<Decl>, Option<Expr>) =
-// 	<ds: (Decl ";")*> <e: Expr?> => (ds, e);
+pub Decls = DeclSemicolon*;
+
+DeclSemicolon: Decl = <d: Decl> ";" => d;
 
 pub Decl: Decl =
-    <name: Name> <args: Args> "=" <body: Expr> => Decl { name, args, body };
-
-Args = Pattern*;
+    <name: Name> <args: Pattern*> "=" <body: Expr> => Decl { name, args, body };
 
 pub Expr: Expr = {
-    <l: Expr> "::" <r: Expr2> => Expr::Cons(Box::new(l), Box::new(r)),
+    <l: Expr> "::" <r: Expr2> => Expr::Op(Op::Cons, Box::new(l), Box::new(r)),
     Expr2,
 };
 
 Expr2: Expr = {
-    <l: Expr2> "+" <r: Expr3> => Expr::Add(Box::new(l), Box::new(r)),
-    <l: Expr2> "-" <r: Expr3> => Expr::Sub(Box::new(l), Box::new(r)),
+    <l: Expr2> "+" <r: Expr3> => Expr::Op(Op::Add, Box::new(l), Box::new(r)),
+    <l: Expr2> "-" <r: Expr3> => Expr::Op(Op::Sub, Box::new(l), Box::new(r)),
     Expr3,
 };
 
 Expr3: Expr = {
-    <l: Expr3> "*" <r: Expr4> => Expr::Mul(Box::new(l), Box::new(r)),
-    <l: Expr3> "/" <r: Expr4> => Expr::Div(Box::new(l), Box::new(r)),
-    <l: Expr3> "mod" <r: Expr4> => Expr::Mod(Box::new(l), Box::new(r)),
+    <l: Expr3> "*" <r: Expr4> => Expr::Op(Op::Mul, Box::new(l), Box::new(r)),
+    <l: Expr3> "/" <r: Expr4> => Expr::Op(Op::Div, Box::new(l), Box::new(r)),
+    <l: Expr3> "mod" <r: Expr4> => Expr::Op(Op::Mod, Box::new(l), Box::new(r)),
     Expr4,
 };
 
 Expr4: Expr = {
-    <f: Expr4> <a: Expr5> => Expr::Call(Box::new(f), Box::new(a)),
+    <f: Expr4> <a: Expr5> => Expr::Op(Op::App, Box::new(f), Box::new(a)),
     Expr5,
 }
 
@@ -40,14 +39,14 @@ Expr5: Expr = {
     "(" <e: Expr> ")" => e,
     Name => Expr::Variable(<>),
     Literal => Expr::Literal(<>),
-    "[" <h: Expr> <t: CommaExpr*> "]" => {
+    "[" <h: Expr> <t: SemicolonExpr*> "]" => {
         let mut l = t;
         l.insert(0, h);
         Expr::List(l)
     },
 };
 
-CommaExpr: Expr = "," <e: Expr> => e;
+SemicolonExpr: Expr = ";" <e: Expr> => e;
 
 Pattern: Pattern = {
     <l: Pattern> "::" <r: Pattern2> => Pattern::Cons(Box::new(l), Box::new(r)),

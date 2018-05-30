@@ -1,21 +1,13 @@
 //! The concrete syntax tree.
 
 mod display;
-mod grammar;
+mod parser;
 
 use symbol::Symbol;
 
-use ast::Literal;
+use ast::{Literal, Op, Pattern};
 
-/// The full CST of a program.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Program {
-    /// The declarations in the program.
-    pub decls: Vec<Decl>,
-
-    /// The main expression.
-    pub main: Expr,
-}
+pub use self::parser::parse_decls;
 
 /// A function or value declaration.
 #[derive(Clone, Debug, PartialEq)]
@@ -30,34 +22,9 @@ pub struct Decl {
     pub body: Expr,
 }
 
-/// A pattern.
-#[derive(Clone, Debug, PartialEq)]
-pub enum Pattern {
-    /// A name.
-    Binding(Symbol),
-
-    /// A cons.
-    Cons(Box<Pattern>, Box<Pattern>),
-
-    /// A literal value.
-    Literal(Literal),
-}
-
 /// An expression.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
-    /// An addition.
-    Add(Box<Expr>, Box<Expr>),
-
-    /// A function call.
-    Call(Box<Expr>, Box<Expr>),
-
-    /// A consing.
-    Cons(Box<Expr>, Box<Expr>),
-
-    /// A division.
-    Div(Box<Expr>, Box<Expr>),
-
     /// A list.
     ///
     /// In theory, this can't be empty (since that'd be the nil literal).
@@ -67,14 +34,8 @@ pub enum Expr {
     /// A literal value.
     Literal(Literal),
 
-    /// A multiplication.
-    Mul(Box<Expr>, Box<Expr>),
-
-    /// A modulus/remainder.
-    Mod(Box<Expr>, Box<Expr>),
-
-    /// A subtraction.
-    Sub(Box<Expr>, Box<Expr>),
+    /// A binary operation.
+    Op(Op, Box<Expr>, Box<Expr>),
 
     /// A variable.
     Variable(Symbol),

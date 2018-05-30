@@ -1,18 +1,9 @@
 //! The abstract syntax tree.
 
+mod convert;
 mod display;
 
 use symbol::Symbol;
-
-/// The full AST of a program.
-#[derive(Clone, Debug, PartialEq)]
-pub struct Program {
-    /// The declarations in the program.
-    pub decls: Vec<Decl>,
-
-    /// The main expression.
-    pub main: Expr,
-}
 
 /// A function or value declaration.
 #[derive(Clone, Debug, PartialEq)]
@@ -43,14 +34,11 @@ pub enum Pattern {
 /// An expression.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
-    /// A binary operator.
-    Binop(Binop, Box<Expr>, Box<Expr>),
-
-    /// A function call.
-    Call(Box<Expr>, Vec<Expr>),
-
     /// A literal value.
     Literal(Literal),
+
+    /// A binary operator.
+    Op(Op, Box<Expr>, Box<Expr>),
 
     /// A variable.
     Variable(Symbol),
@@ -59,13 +47,27 @@ pub enum Expr {
 /// A binary operator.
 #[derive(Clone, Copy, Debug, PartialEq)]
 #[allow(missing_docs)]
-pub enum Binop {
+pub enum Op {
+    /// Addition.
     Add,
-    Sub,
-    Mul,
-    Div,
-    Mod,
+
+    /// Function application.
+    App,
+
+    /// Consing.
     Cons,
+
+    /// Division.
+    Div,
+
+    /// Modulus.
+    Mod,
+
+    /// Multiplication.
+    Mul,
+
+    /// Subtraction.
+    Sub,
 }
 
 /// A literal value.
