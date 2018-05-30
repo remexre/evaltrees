@@ -1,0 +1,74 @@
+use symbol::Symbol;
+
+use ast::Literal;
+use cst::{Decl, Expr, Pattern};
+
+grammar;
+
+// pub Decls: (Vec<Decl>, Option<Expr>) =
+// 	<ds: (Decl ";")*> <e: Expr?> => (ds, e);
+
+pub Decl: Decl =
+    <name: Name> <args: Args> "=" <body: Expr> => Decl { name, args, body };
+
+Args = Pattern*;
+
+pub Expr: Expr = {
+    <l: Expr> "::" <r: Expr2> => Expr::Cons(Box::new(l), Box::new(r)),
+    Expr2,
+};
+
+Expr2: Expr = {
+    <l: Expr2> "+" <r: Expr3> => Expr::Add(Box::new(l), Box::new(r)),
+    <l: Expr2> "-" <r: Expr3> => Expr::Sub(Box::new(l), Box::new(r)),
+    Expr3,
+};
+
+Expr3: Expr = {
+    <l: Expr3> "*" <r: Expr4> => Expr::Mul(Box::new(l), Box::new(r)),
+    <l: Expr3> "/" <r: Expr4> => Expr::Div(Box::new(l), Box::new(r)),
+    <l: Expr3> "mod" <r: Expr4> => Expr::Mod(Box::new(l), Box::new(r)),
+    Expr4,
+};
+
+Expr4: Expr = {
+    <f: Expr4> <a: Expr5> => Expr::Call(Box::new(f), Box::new(a)),
+    Expr5,
+}
+
+Expr5: Expr = {
+    "(" <e: Expr> ")" => e,
+    Name => Expr::Variable(<>),
+    Literal => Expr::Literal(<>),
+    "[" <h: Expr> <t: CommaExpr*> "]" => {
+        let mut l = t;
+        l.insert(0, h);
+        Expr::List(l)
+    },
+};
+
+CommaExpr: Expr = "," <e: Expr> => e;
+
+Pattern: Pattern = {
+    <l: Pattern> "::" <r: Pattern2> => Pattern::Cons(Box::new(l), Box::new(r)),
+    Pattern2,
+};
+
+Pattern2: Pattern = {
+    "(" <p: Pattern> ")" => p,
+    Name => Pattern::Binding(<>),
+    Literal => Pattern::Literal(<>),
+};
+
+Literal: Literal = {
+    "[" "]" => Literal::Nil,
+    <s: r"[0-9]+"> => Literal::Int(s.parse().unwrap()),
+};
+
+Name: Symbol = <name: r"[a-zA-Z_][0-9a-zA-Z_]*"> => {
+    if name == "_" {
+        warn!("_ is a valid variable name, not the wildcard pattern");
+        warn!("Instead, prefer _0, _1, etc.");
+    }
+    Symbol::from(name)
+};
