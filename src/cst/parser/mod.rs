@@ -28,7 +28,7 @@ impl FromStr for Expr {
     }
 }
 
-/// Parses multiple semicolon-separated decls.
+/// Parses multiple semicolon-terminated decls.
 pub fn parse_decls(src: &str) -> Result<Vec<Decl>, ParseError<usize, String, &'static str>> {
     grammar::DeclsParser::new()
         .parse(src)

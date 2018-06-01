@@ -7,41 +7,44 @@ use symbol::Symbol;
 
 /// A function or value declaration.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Decl {
+pub struct Decl<Aux = ()> {
     /// The name of the function or value.
     pub name: Symbol,
 
     /// The arguments to the function. If empty, the decl is for a value.
-    pub args: Vec<Pattern>,
+    pub args: Vec<Pattern<Aux>>,
 
     /// The body of the function, or the expression assigned to the value.
-    pub body: Expr,
+    pub body: Expr<Aux>,
+
+    /// Auxiliary data.
+    pub aux: Aux,
 }
 
 /// A pattern.
 #[derive(Clone, Debug, PartialEq)]
-pub enum Pattern {
+pub enum Pattern<Aux = ()> {
     /// A name.
-    Binding(Symbol),
+    Binding(Symbol, Aux),
 
     /// A cons.
-    Cons(Box<Pattern>, Box<Pattern>),
+    Cons(Box<Pattern<Aux>>, Box<Pattern<Aux>>, Aux),
 
     /// A literal value.
-    Literal(Literal),
+    Literal(Literal, Aux),
 }
 
 /// An expression.
 #[derive(Clone, Debug, PartialEq)]
-pub enum Expr {
+pub enum Expr<Aux = ()> {
     /// A literal value.
-    Literal(Literal),
+    Literal(Literal, Aux),
 
     /// A binary operator.
-    Op(Op, Box<Expr>, Box<Expr>),
+    Op(Op, Box<Expr<Aux>>, Box<Expr<Aux>>, Aux),
 
     /// A variable.
-    Variable(Symbol),
+    Variable(Symbol, Aux),
 }
 
 /// A binary operator.

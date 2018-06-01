@@ -49,14 +49,14 @@ Expr5: Expr = {
 SemicolonExpr: Expr = ";" <e: Expr> => e;
 
 Pattern: Pattern = {
-    <l: Pattern> "::" <r: Pattern2> => Pattern::Cons(Box::new(l), Box::new(r)),
+    <l: Pattern2> "::" <r: Pattern> => Pattern::Cons(Box::new(l), Box::new(r), ()),
     Pattern2,
 };
 
 Pattern2: Pattern = {
     "(" <p: Pattern> ")" => p,
-    Name => Pattern::Binding(<>),
-    Literal => Pattern::Literal(<>),
+    Name => Pattern::Binding(<>, ()),
+    Literal => Pattern::Literal(<>, ()),
 };
 
 Literal: Literal = {
