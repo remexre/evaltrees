@@ -20,6 +20,7 @@ use std::io::Read;
 use std::process::exit;
 
 use evaltrees::cst::parse_decls;
+use evaltrees::typeck::typeck_decls;
 use failure::Error;
 use structopt::StructOpt;
 
@@ -51,6 +52,7 @@ fn main() {
 }
 
 fn run(options: Options) -> Result<(), Error> {
+    // Load the CST of the declarations, if appropriate.
     let decls = match options.decls_path {
         Some(decls_path) => {
             let mut f = File::open(decls_path)?;
@@ -61,7 +63,14 @@ fn run(options: Options) -> Result<(), Error> {
         None => Vec::new(),
     };
 
-    let decls = unimplemented!("convert and typeck");
+    // Convert the CST to an AST.
+    let decls = decls
+        .into_iter()
+        .map(|decl| decl.to_ast())
+        .collect::<Result<Vec<_>, _>>()?;
+
+    // Type-check the AST.
+    let decls = typeck_decls(decls)?;
 
     if let Some(expr) = options.expr {
         let expr = unimplemented!();

@@ -14,4 +14,3 @@ extern crate symbol;
 pub mod ast;
 pub mod cst;
 pub mod typeck;
-pub mod typed_ast;

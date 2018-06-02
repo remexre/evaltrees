@@ -1,7 +1,7 @@
-use typeck::{SubstVar, Substitution};
+use typeck::subst::{SubstVar, Substitution};
 
 /// A partial type, used in substitutions.
-#[derive(Clone, Debug, Eq, PartialEq)]
+#[derive(Clone, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Ty {
     /// A function type.
     Func(Box<Ty>, Box<Ty>),

@@ -1,3 +1,5 @@
+use std::collections::BTreeSet;
+
 use symbol::Symbol;
 
 use ast::{Decl, Expr, Literal, Op, Pattern};
@@ -13,17 +15,37 @@ pub enum ASTConversionError {
 }
 
 /// Checks that the arguments contain no duplicate variables.
-pub fn check_args(args: Vec<Pattern>) -> Result<Vec<Pattern>, ASTConversionError> {
-    unimplemented!()
+pub fn check_args(args: &[Pattern]) -> Result<(), Symbol> {
+    let mut vars = BTreeSet::new();
+
+    fn check_arg(vars: &mut BTreeSet<Symbol>, arg: &Pattern) -> Result<(), Symbol> {
+        match *arg {
+            Pattern::Binding(n, _) => if vars.insert(n) {
+                Ok(())
+            } else {
+                Err(n)
+            },
+            Pattern::Cons(ref l, ref r, _) => {
+                check_arg(vars, l)?;
+                check_arg(vars, r)
+            }
+            Pattern::Literal(_, _) => Ok(()),
+        }
+    }
+
+    for arg in args {
+        check_arg(&mut vars, arg)?;
+    }
+    Ok(())
 }
 
 impl CstDecl {
     /// Converts a CST decl to an AST decl.
     pub fn to_ast(self) -> Result<Decl, ASTConversionError> {
-        let args = check_args(self.args)?;
+        check_args(&self.args).map_err(|n| ASTConversionError::DuplicateArgVar(self.name, n))?;
         Ok(Decl {
             name: self.name,
-            args,
+            args: self.args,
             body: self.body.to_ast()?,
             aux: (),
         })

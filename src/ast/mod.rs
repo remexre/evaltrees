@@ -82,3 +82,24 @@ pub enum Literal {
     /// An empty list.
     Nil,
 }
+
+/// A (fully formed) type.
+#[derive(Clone, Debug, PartialEq)]
+pub enum Type {
+    /// Universal quantification over a variable.
+    ///
+    /// De Brujin indices are used here, so no explicit names are needed.
+    Forall(Box<Type>),
+
+    /// A function type.
+    Func(Box<Type>, Box<Type>),
+
+    /// An integral type.
+    Int,
+
+    /// A list type.
+    List(Box<Type>),
+
+    /// A type variable.
+    Var(usize),
+}

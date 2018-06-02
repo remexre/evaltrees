@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use typeck::Ty;
+use typeck::ty::Ty;
 
 /// A variable present in a substitution.
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -11,9 +11,9 @@ impl SubstVar {
     /// Generates a fresh variable.
     pub fn gensym() -> SubstVar {
         lazy_static! {
-            pub static ref next: AtomicUsize = AtomicUsize::default();
+            pub static ref NEXT: AtomicUsize = AtomicUsize::default();
         }
-        let n = next.fetch_add(1, Ordering::SeqCst);
+        let n = NEXT.fetch_add(1, Ordering::SeqCst);
         SubstVar(n)
     }
 }
