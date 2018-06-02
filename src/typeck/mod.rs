@@ -2,6 +2,7 @@
 
 mod annotations;
 mod constraint;
+mod reify;
 mod subst;
 mod ty;
 mod util;
@@ -9,30 +10,84 @@ mod util;
 use std::collections::BTreeSet;
 
 use ast::{Decl, Type};
-use typeck::{annotations::add_annotations_to_decls, constraint::Constraint, subst::Substitution};
+use typeck::{annotations::add_annotations_to_decls, constraint::Constraint, subst::Substitution,
+             ty::Ty};
 
 /// An error during typechecking.
 #[derive(Clone, Debug, Fail, PartialEq)]
 pub enum TypeError {
-    #[fail(display = "d")]
-    d,
+    /// A constraint between two types couldn't be unified.
+    // TODO: display-attr crate for Ty
+    // TODO: collect type errors and continue to unify (incl. on errors) to be
+    // able to display multiple, and display them better?
+    #[fail(display = "Can't unify {:?} with {:?}", _0, _1)]
+    CantUnify(Ty, Ty),
 }
 
 /// Completely type-checks a series of declarations.
 pub fn typeck_decls(decls: Vec<Decl<()>>) -> Result<Vec<Decl<Type>>, TypeError> {
     // First, annotate the decls with type variables.
-    let decls = add_annotations_to_decls(decls);
+    let mut decls = add_annotations_to_decls(decls);
 
-    // Next, collect the type constraints.
+    // Next, collect the type constraints and unify them into a substitution.
     let constraints = decls
         .iter()
-        .map(|decl| decl.collect_constraints())
-        .collect::<Vec<_>>();
+        .flat_map(|decl| decl.collect_constraints())
+        .collect();
+    let subst = unify(constraints)?;
 
-    unimplemented!("{:?}", (decls, constraints))
+    // Then, apply the substitution across the AST.
+    for decl in decls.iter_mut() {
+        decl.apply_subst(&subst);
+    }
+
+    // Finally, reify the types across the AST.
+    let decls = decls.into_iter().map(|decl| decl.reify()).collect();
+    Ok(decls)
 }
 
 /// Generates a substitution from a set of constraints.
-pub fn unify(constraints: BTreeSet<Constraint>) -> Substitution {
-    unimplemented!()
+///
+/// Note that no occurs check is present.
+pub fn unify(constraints: BTreeSet<Constraint>) -> Result<Substitution, TypeError> {
+    // We go BTreeSet->Vec instead of working with Vecs all the way through to
+    // ensure uniqueness, and because it feels semantically closer to what we
+    // want anyway. The Vec is only here because there's no .remove_arbitrary()
+    // operation on sets.
+    let mut constraints = constraints.into_iter().collect::<Vec<_>>();
+
+    let mut subst = Substitution::new();
+    while let Some(Constraint(s, t)) = constraints.pop() {
+        if s == t {
+            // Yay, nothing to do.
+        } else {
+            match (s, t) {
+                (Ty::Var(x), t) => {
+                    for Constraint(cs, ct) in constraints.iter_mut() {
+                        cs.sub(x, &t);
+                        ct.sub(x, &t);
+                    }
+                    subst.add(x, t);
+                }
+                (s, Ty::Var(x)) => {
+                    for Constraint(cs, ct) in constraints.iter_mut() {
+                        cs.sub(x, &s);
+                        ct.sub(x, &s);
+                    }
+                    subst.add(x, s);
+                }
+                (Ty::Func(s1, s2), Ty::Func(t1, t2)) => {
+                    constraints.push(Constraint(*s1, *t1));
+                    constraints.push(Constraint(*s2, *t2));
+                }
+                (Ty::List(s), Ty::List(t)) => {
+                    constraints.push(Constraint(*s, *t));
+                }
+                (s, t) => {
+                    return Err(TypeError::CantUnify(s, t));
+                }
+            }
+        }
+    }
+    Ok(subst)
 }

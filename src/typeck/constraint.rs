@@ -6,8 +6,12 @@ use ast::{Decl, Expr, Literal, Op, Pattern};
 use typeck::ty::Ty;
 
 /// A constraint, which holds two types equal.
+///
+/// Eq and Ord here are opaque to flipping; i.e. if
+/// `Constraint(a, b) > Constraint(c, d)`, then
+/// `Constraint(b, a) > Constraint(c, d)` as well.
 #[derive(Clone, Debug, Eq)]
-pub struct Constraint(Ty, Ty);
+pub struct Constraint(pub Ty, pub Ty);
 
 impl PartialEq for Constraint {
     fn eq(&self, other: &Constraint) -> bool {

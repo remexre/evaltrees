@@ -21,6 +21,13 @@ pub struct Decl<Aux = ()> {
     pub aux: Aux,
 }
 
+impl<Aux> Decl<Aux> {
+    /// Gets the auxiliary data.
+    pub fn get_aux(&self) -> &Aux {
+        &self.aux
+    }
+}
+
 /// A pattern.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Pattern<Aux = ()> {
@@ -34,6 +41,17 @@ pub enum Pattern<Aux = ()> {
     Literal(Literal, Aux),
 }
 
+impl<Aux> Pattern<Aux> {
+    /// Gets the auxiliary data.
+    pub fn get_aux(&self) -> &Aux {
+        match *self {
+            Pattern::Binding(_, ref aux)
+            | Pattern::Cons(_, _, ref aux)
+            | Pattern::Literal(_, ref aux) => aux,
+        }
+    }
+}
+
 /// An expression.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr<Aux = ()> {
@@ -45,6 +63,17 @@ pub enum Expr<Aux = ()> {
 
     /// A variable.
     Variable(Symbol, Aux),
+}
+
+impl<Aux> Expr<Aux> {
+    /// Gets the auxiliary data.
+    pub fn get_aux(&self) -> &Aux {
+        match *self {
+            Expr::Literal(_, ref aux) | Expr::Op(_, _, _, ref aux) | Expr::Variable(_, ref aux) => {
+                aux
+            }
+        }
+    }
 }
 
 /// A binary operator.
