@@ -104,7 +104,11 @@ impl Pattern<Ty> {
     pub fn collect_constraints(&self) -> BTreeSet<Constraint> {
         match *self {
             Pattern::Binding(_, _) => BTreeSet::new(),
-            Pattern::Cons(_, _, ref ty) => unimplemented!(),
+            Pattern::Cons(ref l, ref r, ref ty) => vec![
+                Constraint(r.ty(), ty.clone()),
+                Constraint(r.ty(), Ty::List(Box::new(l.ty()))),
+            ].into_iter()
+                .collect(),
             Pattern::Literal(lit, ref ty) => once(Constraint(ty.clone(), lit.ty())).collect(),
         }
     }

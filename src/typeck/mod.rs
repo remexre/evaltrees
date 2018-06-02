@@ -6,8 +6,10 @@ mod subst;
 mod ty;
 mod util;
 
+use std::collections::BTreeSet;
+
 use ast::{Decl, Type};
-use typeck::annotations::add_annotations_to_decls;
+use typeck::{annotations::add_annotations_to_decls, constraint::Constraint, subst::Substitution};
 
 /// An error during typechecking.
 #[derive(Clone, Debug, Fail, PartialEq)]
@@ -28,4 +30,9 @@ pub fn typeck_decls(decls: Vec<Decl<()>>) -> Result<Vec<Decl<Type>>, TypeError> 
         .collect::<Vec<_>>();
 
     unimplemented!("{:?}", (decls, constraints))
+}
+
+/// Generates a substitution from a set of constraints.
+pub fn unify(constraints: BTreeSet<Constraint>) -> Substitution {
+    unimplemented!()
 }

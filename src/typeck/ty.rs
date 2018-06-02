@@ -26,7 +26,7 @@ impl Ty {
             ),
             Ty::Int => Ty::Int,
             Ty::List(t) => Ty::List(Box::new(t.apply_subst(subst))),
-            Ty::Var(v) => if let Some(ty) = subst.lookup(v) {
+            Ty::Var(v) => if let Some(ty) = subst.get(v) {
                 ty
             } else {
                 Ty::Var(v)
