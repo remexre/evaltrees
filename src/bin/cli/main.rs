@@ -19,8 +19,8 @@ use std::fs::File;
 use std::io::Read;
 use std::process::exit;
 
-use evaltrees::cst::parse_decls;
-use evaltrees::typeck::typeck_decls;
+use evaltrees::cst::{parse_decls, Expr as CstExpr};
+use evaltrees::typeck::{typeck_decls, typeck_expr};
 use failure::Error;
 use structopt::StructOpt;
 
@@ -72,8 +72,10 @@ fn run(options: Options) -> Result<(), Error> {
     // Type-check the AST.
     let decls = typeck_decls(decls)?;
 
+    // Actually run the thing.
     if let Some(expr) = options.expr {
-        let expr = unimplemented!();
+        let expr = expr.parse::<CstExpr>()?.to_ast()?;
+        let expr = typeck_expr(expr, &decls)?;
         plain::run(decls, expr)
     } else {
         repl::run(decls)

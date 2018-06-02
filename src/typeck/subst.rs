@@ -10,7 +10,7 @@ pub struct SubstVar(usize);
 
 impl SubstVar {
     /// Generates a fresh variable.
-    pub fn gensym() -> SubstVar {
+    pub fn fresh() -> SubstVar {
         lazy_static! {
             pub static ref NEXT: AtomicUsize = AtomicUsize::default();
         }
@@ -80,8 +80,8 @@ impl Ty {
 }
 
 impl Decl<Ty> {
-    /// Applies a substitution to the Decl.
-    pub fn apply_subst(&mut self, subst: &Substitution) {
+    /// Applies a substitution to the declaration.
+    pub(in typeck) fn apply_subst(&mut self, subst: &Substitution) {
         for arg in self.args.iter_mut() {
             arg.apply_subst(subst);
         }
@@ -91,8 +91,8 @@ impl Decl<Ty> {
 }
 
 impl Expr<Ty> {
-    /// Applies a substitution to the Expr.
-    pub fn apply_subst(&mut self, subst: &Substitution) {
+    /// Applies a substitution to the expression.
+    pub(in typeck) fn apply_subst(&mut self, subst: &Substitution) {
         match self {
             Expr::Literal(_, ty) => ty.apply_subst(subst),
             Expr::Op(_, l, r, ty) => {
@@ -107,7 +107,7 @@ impl Expr<Ty> {
 
 impl Pattern<Ty> {
     /// Applies a substitution to the pattern.
-    pub fn apply_subst(&mut self, subst: &Substitution) {
+    fn apply_subst(&mut self, subst: &Substitution) {
         match self {
             Pattern::Binding(_, ty) => ty.apply_subst(subst),
             Pattern::Cons(h, t, ty) => {

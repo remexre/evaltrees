@@ -1,26 +1,27 @@
 use linked_hash_set::LinkedHashSet;
 
 use ast::{Decl, Expr, Pattern, Type};
-use typeck::{subst::SubstVar, ty::Ty};
+use typeck::{subst::SubstVar, ty::Ty, util::UnreifyEnv};
 
 impl Decl<Ty> {
     /// Reifies a declaration.
-    pub fn reify(self) -> Decl<Type> {
+    pub(in typeck) fn reify(self) -> Decl<Type> {
         let mut vars = LinkedHashSet::new();
         for arg in &self.args {
             arg.collect_vars(&mut vars);
         }
 
         let mut env = vars.into_iter().collect::<Vec<_>>();
-        env.reverse();
-
-        let mut ty = self.aux.reify(&env);
+        let mut ty = self.aux.reify_in(&env);
         for _ in &env {
             ty = Type::Forall(Box::new(ty));
         }
 
-        let args = self.args.into_iter().map(|arg| arg.reify(&env)).collect();
-        let body = self.body.reify(&env);
+        let args = self.args
+            .into_iter()
+            .map(|arg| arg.reify_in(&env))
+            .collect();
+        let body = self.body.reify_in(&env);
         Decl {
             name: self.name,
             args,
@@ -31,16 +32,38 @@ impl Decl<Ty> {
 }
 
 impl Expr<Ty> {
-    fn reify(self, env: &[SubstVar]) -> Expr<Type> {
+    fn collect_vars(&self, vars: &mut LinkedHashSet<SubstVar>) {
+        match *self {
+            Expr::Literal(_, ref ty) | Expr::Variable(_, ref ty) => {
+                ty.collect_vars(vars);
+            }
+            Expr::Op(_, ref l, ref r, ref ty) => {
+                l.collect_vars(vars);
+                r.collect_vars(vars);
+                ty.collect_vars(vars);
+            }
+        }
+    }
+
+    /// Reifies an expression.
+    pub(in typeck) fn reify(self) -> Expr<Type> {
+        let mut vars = LinkedHashSet::new();
+        self.collect_vars(&mut vars);
+        let mut env = vars.into_iter().collect::<Vec<_>>();
+        env.reverse();
+        self.reify_in(&env)
+    }
+
+    fn reify_in(self, env: &[SubstVar]) -> Expr<Type> {
         match self {
-            Expr::Literal(l, ty) => Expr::Literal(l, ty.reify(env)),
+            Expr::Literal(l, ty) => Expr::Literal(l, ty.reify_in(env)),
             Expr::Op(o, l, r, ty) => Expr::Op(
                 o,
-                Box::new(l.reify(env)),
-                Box::new(r.reify(env)),
-                ty.reify(env),
+                Box::new(l.reify_in(env)),
+                Box::new(r.reify_in(env)),
+                ty.reify_in(env),
             ),
-            Expr::Variable(v, ty) => Expr::Variable(v, ty.reify(env)),
+            Expr::Variable(v, ty) => Expr::Variable(v, ty.reify_in(env)),
         }
     }
 }
@@ -48,40 +71,50 @@ impl Expr<Ty> {
 impl Pattern<Ty> {
     fn collect_vars(&self, vars: &mut LinkedHashSet<SubstVar>) {
         match *self {
+            Pattern::Binding(_, ref ty) | Pattern::Literal(_, ref ty) => {
+                ty.collect_vars(vars);
+            }
             Pattern::Cons(ref h, ref t, ref ty) => {
-                if let Ty::Var(var) = *ty {
-                    vars.insert(var);
-                }
                 h.collect_vars(vars);
                 t.collect_vars(vars);
-            }
-            Pattern::Binding(_, ref ty) | Pattern::Literal(_, ref ty) => {
-                if let Ty::Var(var) = *ty {
-                    vars.insert(var);
-                }
+                ty.collect_vars(vars);
             }
         }
     }
 
-    fn reify(self, env: &[SubstVar]) -> Pattern<Type> {
+    fn reify_in(self, env: &[SubstVar]) -> Pattern<Type> {
         match self {
-            Pattern::Binding(n, ty) => Pattern::Binding(n, ty.reify(env)),
+            Pattern::Binding(n, ty) => Pattern::Binding(n, ty.reify_in(env)),
             Pattern::Cons(h, t, ty) => Pattern::Cons(
-                Box::new(h.reify(env)),
-                Box::new(t.reify(env)),
-                ty.reify(env),
+                Box::new(h.reify_in(env)),
+                Box::new(t.reify_in(env)),
+                ty.reify_in(env),
             ),
-            Pattern::Literal(l, ty) => Pattern::Literal(l, ty.reify(env)),
+            Pattern::Literal(l, ty) => Pattern::Literal(l, ty.reify_in(env)),
         }
     }
 }
 
 impl Ty {
-    fn reify(self, env: &[SubstVar]) -> Type {
+    fn collect_vars(&self, vars: &mut LinkedHashSet<SubstVar>) {
+        match *self {
+            Ty::Func(ref l, ref r) => {
+                l.collect_vars(vars);
+                r.collect_vars(vars);
+            }
+            Ty::Int => {}
+            Ty::List(ref t) => t.collect_vars(vars),
+            Ty::Var(v) => {
+                vars.insert(v);
+            }
+        }
+    }
+
+    fn reify_in(self, env: &[SubstVar]) -> Type {
         match self {
-            Ty::Func(l, r) => Type::Func(Box::new(l.reify(env)), Box::new(r.reify(env))),
+            Ty::Func(l, r) => Type::Func(Box::new(l.reify_in(env)), Box::new(r.reify_in(env))),
             Ty::Int => Type::Int,
-            Ty::List(t) => Type::List(Box::new(t.reify(env))),
+            Ty::List(t) => Type::List(Box::new(t.reify_in(env))),
             Ty::Var(v) => {
                 for (i, &v2) in env.iter().enumerate() {
                     if v == v2 {
@@ -91,5 +124,30 @@ impl Ty {
                 panic!("Error: unknown var {:?} in env {:?}", v, env)
             }
         }
+    }
+}
+
+impl Type {
+    pub(in typeck) fn unreify(self) -> Ty {
+        fn helper(mut ty: Type, mut env: UnreifyEnv) -> Ty {
+            // First, peel off any Foralls.
+            while let Type::Forall(t) = ty {
+                env.push(SubstVar::fresh());
+                ty = *t;
+            }
+
+            match ty {
+                Type::Forall(_) => unreachable!(),
+                Type::Func(l, r) => {
+                    let l = helper(*l, env.clone());
+                    let r = helper(*r, env);
+                    Ty::Func(Box::new(l), Box::new(r))
+                }
+                Type::Int => Ty::Int,
+                Type::List(t) => Ty::List(Box::new(helper(*t, env))),
+                Type::Var(n) => Ty::Var(env.get(n)),
+            }
+        }
+        helper(self, UnreifyEnv::new())
     }
 }

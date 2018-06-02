@@ -43,10 +43,10 @@ impl PartialOrd for Constraint {
 
 impl Decl<Ty> {
     /// Collects type constraints.
-    pub fn collect_constraints(&self) -> BTreeSet<Constraint> {
-        let mut ty = self.body.ty();
+    pub(in typeck) fn collect_constraints(&self) -> BTreeSet<Constraint> {
+        let mut ty = self.body.aux();
         for arg in self.args.iter().rev() {
-            ty = Ty::Func(Box::new(arg.ty()), Box::new(ty));
+            ty = Ty::Func(Box::new(arg.aux()), Box::new(ty));
         }
 
         self.args
@@ -60,35 +60,32 @@ impl Decl<Ty> {
 
 impl Expr<Ty> {
     /// Collects type constraints.
-    pub fn collect_constraints(&self) -> BTreeSet<Constraint> {
+    pub(in typeck) fn collect_constraints(&self) -> BTreeSet<Constraint> {
         match *self {
             Expr::Literal(lit, ref ty) => once(Constraint(ty.clone(), lit.ty())).collect(),
             Expr::Op(Op::App, ref l, ref r, ref ty) => once(Constraint(
-                l.ty(),
-                Ty::Func(Box::new(r.ty()), Box::new(ty.clone())),
-            )).collect(),
+                l.aux(),
+                Ty::Func(Box::new(r.aux()), Box::new(ty.clone())),
+            )).chain(l.collect_constraints())
+                .chain(r.collect_constraints())
+                .collect(),
             Expr::Op(Op::Cons, ref l, ref r, ref ty) => vec![
-                Constraint(r.ty(), ty.clone()),
-                Constraint(r.ty(), Ty::List(Box::new(l.ty()))),
+                Constraint(r.aux(), ty.clone()),
+                Constraint(r.aux(), Ty::List(Box::new(l.aux()))),
             ].into_iter()
+                .chain(l.collect_constraints())
+                .chain(r.collect_constraints())
                 .collect(),
             // All other ops are int->int->int
             Expr::Op(_, ref l, ref r, ref ty) => vec![
-                Constraint(l.ty(), Ty::Int),
-                Constraint(r.ty(), Ty::Int),
+                Constraint(l.aux(), Ty::Int),
+                Constraint(r.aux(), Ty::Int),
                 Constraint(ty.clone(), Ty::Int),
             ].into_iter()
+                .chain(l.collect_constraints())
+                .chain(r.collect_constraints())
                 .collect(),
             Expr::Variable(_, _) => BTreeSet::new(),
-        }
-    }
-
-    /// Returns the type stored in the expression.
-    fn ty(&self) -> Ty {
-        match *self {
-            Expr::Literal(_, ref ty) => ty.clone(),
-            Expr::Op(_, _, _, ref ty) => ty.clone(),
-            Expr::Variable(_, ref ty) => ty.clone(),
         }
     }
 }
@@ -105,24 +102,20 @@ impl Literal {
 
 impl Pattern<Ty> {
     /// Collects type constraints.
-    pub fn collect_constraints(&self) -> BTreeSet<Constraint> {
+    fn collect_constraints(&self) -> BTreeSet<Constraint> {
+        let mut constraints = BTreeSet::new();
         match *self {
-            Pattern::Binding(_, _) => BTreeSet::new(),
-            Pattern::Cons(ref l, ref r, ref ty) => vec![
-                Constraint(r.ty(), ty.clone()),
-                Constraint(r.ty(), Ty::List(Box::new(l.ty()))),
-            ].into_iter()
-                .collect(),
-            Pattern::Literal(lit, ref ty) => once(Constraint(ty.clone(), lit.ty())).collect(),
+            Pattern::Binding(_, _) => {}
+            Pattern::Cons(ref l, ref r, ref ty) => {
+                constraints.insert(Constraint(ty.clone(), r.aux()));
+                constraints.insert(Constraint(ty.clone(), Ty::List(Box::new(l.aux()))));
+                constraints.extend(l.collect_constraints());
+                constraints.extend(r.collect_constraints());
+            }
+            Pattern::Literal(lit, ref ty) => {
+                constraints.insert(Constraint(ty.clone(), lit.ty()));
+            }
         }
-    }
-
-    /// Returns the type stored in the pattern.
-    fn ty(&self) -> Ty {
-        match *self {
-            Pattern::Binding(_, ref ty) => ty.clone(),
-            Pattern::Cons(_, _, ref ty) => ty.clone(),
-            Pattern::Literal(_, ref ty) => ty.clone(),
-        }
+        constraints
     }
 }

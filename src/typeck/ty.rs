@@ -19,6 +19,6 @@ pub enum Ty {
 impl Ty {
     /// Returns a fresh type variable.
     pub fn fresh() -> Ty {
-        Ty::Var(SubstVar::gensym())
+        Ty::Var(SubstVar::fresh())
     }
 }

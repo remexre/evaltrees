@@ -1,8 +1,8 @@
 use ast::{Decl, Expr, Pattern};
-use typeck::{ty::Ty, util::Env};
+use typeck::{ty::Ty, util::AnnotEnv};
 
 pub fn add_annotations_to_decls(decls: Vec<Decl<()>>) -> Vec<Decl<Ty>> {
-    let mut env = Env::new();
+    let mut env = AnnotEnv::new();
 
     for decl in &decls {
         env.get(decl.name);
@@ -15,7 +15,7 @@ pub fn add_annotations_to_decls(decls: Vec<Decl<()>>) -> Vec<Decl<Ty>> {
 }
 
 impl Decl<()> {
-    fn add_type_annotations(self, env: &mut Env) -> Decl<Ty> {
+    pub(in typeck) fn add_type_annotations(self, env: &mut AnnotEnv) -> Decl<Ty> {
         let ty = env.get(self.name);
         let args = self.args
             .into_iter()
@@ -32,7 +32,7 @@ impl Decl<()> {
 }
 
 impl Expr<()> {
-    fn add_type_annotations(self, env: &mut Env) -> Expr<Ty> {
+    pub(in typeck) fn add_type_annotations(self, env: &mut AnnotEnv) -> Expr<Ty> {
         match self {
             Expr::Literal(l, ()) => Expr::Literal(l, Ty::fresh()),
             Expr::Op(op, l, r, ()) => Expr::Op(
@@ -47,7 +47,7 @@ impl Expr<()> {
 }
 
 impl Pattern<()> {
-    fn add_type_annotations(self, env: &mut Env) -> Pattern<Ty> {
+    fn add_type_annotations(self, env: &mut AnnotEnv) -> Pattern<Ty> {
         match self {
             Pattern::Binding(n, ()) => {
                 let ty = Ty::fresh();

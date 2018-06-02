@@ -9,9 +9,9 @@ mod util;
 
 use std::collections::BTreeSet;
 
-use ast::{Decl, Type};
+use ast::{Decl, Expr, Type};
 use typeck::{annotations::add_annotations_to_decls, constraint::Constraint, subst::Substitution,
-             ty::Ty};
+             ty::Ty, util::AnnotEnv};
 
 /// An error during typechecking.
 #[derive(Clone, Debug, Fail, PartialEq)]
@@ -42,14 +42,34 @@ pub fn typeck_decls(decls: Vec<Decl<()>>) -> Result<Vec<Decl<Type>>, TypeError> 
     }
 
     // Finally, reify the types across the AST.
-    let decls = decls.into_iter().map(|decl| decl.reify()).collect();
+    let decls = decls
+        .into_iter()
+        .map(|decl| {
+            let decl = decl.reify();
+            decl
+        })
+        .collect();
     Ok(decls)
+}
+
+/// Type-checks an expression given the declarations that are in scope.
+pub fn typeck_expr(expr: Expr, decls: &[Decl<Type>]) -> Result<Expr<Type>, TypeError> {
+    let mut env = AnnotEnv::new();
+    for decl in decls {
+        env.put(decl.name, decl.aux().unreify());
+    }
+
+    let mut expr = expr.add_type_annotations(&mut env);
+    let constraints = expr.collect_constraints();
+    let subst = unify(constraints)?;
+    expr.apply_subst(&subst);
+    Ok(expr.reify())
 }
 
 /// Generates a substitution from a set of constraints.
 ///
-/// Note that no occurs check is present.
-pub fn unify(constraints: BTreeSet<Constraint>) -> Result<Substitution, TypeError> {
+/// Note that no occurs check is currently implemented.
+fn unify(constraints: BTreeSet<Constraint>) -> Result<Substitution, TypeError> {
     // We go BTreeSet->Vec instead of working with Vecs all the way through to
     // ensure uniqueness, and because it feels semantically closer to what we
     // want anyway. The Vec is only here because there's no .remove_arbitrary()

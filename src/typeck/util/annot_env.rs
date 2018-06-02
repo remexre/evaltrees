@@ -4,11 +4,11 @@ use symbol::Symbol;
 
 use typeck::ty::Ty;
 
-/// The lexical environment, used when assigning type variables.
+/// A lexical environment used when assigning type variables.
 ///
 /// Supports O(1) cloning.
 #[derive(Clone, Debug)]
-pub struct Env {
+pub struct AnnotEnv {
     // The option allows taking from inner easier.
     inner: Option<Rc<EnvInner>>,
 }
@@ -19,7 +19,7 @@ pub enum EnvInner {
     Nil,
 }
 
-impl Env {
+impl AnnotEnv {
     /// Returns the value associated with a name, unless it does not exist.
     /// In that case, a fresh type variable is created and added to the
     /// environment.
@@ -44,9 +44,9 @@ impl Env {
         }
     }
 
-    /// Creates a new Env.
-    pub fn new() -> Env {
-        Env {
+    /// Creates a new AnnotEnv.
+    pub fn new() -> AnnotEnv {
+        AnnotEnv {
             inner: Some(Rc::new(EnvInner::Nil)),
         }
     }

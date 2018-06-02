@@ -22,9 +22,16 @@ pub struct Decl<Aux = ()> {
 }
 
 impl<Aux> Decl<Aux> {
-    /// Gets the auxiliary data.
-    pub fn get_aux(&self) -> &Aux {
+    /// Gets the auxiliary data as a reference.
+    pub fn aux_ref(&self) -> &Aux {
         &self.aux
+    }
+}
+
+impl<Aux: Clone> Decl<Aux> {
+    /// Clones the auxiliary data out.
+    pub fn aux(&self) -> Aux {
+        self.aux_ref().clone()
     }
 }
 
@@ -42,13 +49,20 @@ pub enum Pattern<Aux = ()> {
 }
 
 impl<Aux> Pattern<Aux> {
-    /// Gets the auxiliary data.
-    pub fn get_aux(&self) -> &Aux {
+    /// Gets the auxiliary data as a reference.
+    pub fn aux_ref(&self) -> &Aux {
         match *self {
             Pattern::Binding(_, ref aux)
             | Pattern::Cons(_, _, ref aux)
             | Pattern::Literal(_, ref aux) => aux,
         }
+    }
+}
+
+impl<Aux: Clone> Pattern<Aux> {
+    /// Clones the auxiliary data out.
+    pub fn aux(&self) -> Aux {
+        self.aux_ref().clone()
     }
 }
 
@@ -66,13 +80,20 @@ pub enum Expr<Aux = ()> {
 }
 
 impl<Aux> Expr<Aux> {
-    /// Gets the auxiliary data.
-    pub fn get_aux(&self) -> &Aux {
+    /// Gets the auxiliary data as a reference.
+    pub fn aux_ref(&self) -> &Aux {
         match *self {
             Expr::Literal(_, ref aux) | Expr::Op(_, _, _, ref aux) | Expr::Variable(_, ref aux) => {
                 aux
             }
         }
+    }
+}
+
+impl<Aux: Clone> Expr<Aux> {
+    /// Clones the auxiliary data out.
+    pub fn aux(&self) -> Aux {
+        self.aux_ref().clone()
     }
 }
 

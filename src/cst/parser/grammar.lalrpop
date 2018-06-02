@@ -13,7 +13,7 @@ pub Decl: Decl =
     <name: Name> <args: Pattern*> "=" <body: Expr> => Decl { name, args, body };
 
 pub Expr: Expr = {
-    <l: Expr> "::" <r: Expr2> => Expr::Op(Op::Cons, Box::new(l), Box::new(r)),
+    <l: Expr2> "::" <r: Expr> => Expr::Op(Op::Cons, Box::new(l), Box::new(r)),
     Expr2,
 };
 
