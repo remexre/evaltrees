@@ -7,43 +7,29 @@ mod util;
 
 use std::collections::BTreeSet;
 
-use hamt_rs::HamtMap;
 use symbol::Symbol;
 
 use ast::{Decl, Expr, Pattern};
-
-use self::constraint::Constraint;
-use self::subst::{SubstVar, Substitution};
-use self::ty::Ty;
-
-fn get_or_fresh(env: HamtMap<Symbol, Ty>, name: Symbol) -> (HamtMap<Symbol, Ty>, Ty) {
-    // Borrowck gets mad here too...
-    let tmp = env.find(&name).map(|ty| ty.clone());
-    if let Some(ty) = tmp {
-        let ty = ty.clone();
-        (env, ty)
-    } else {
-        let ty = Ty::fresh();
-        let env = env.plus(name, ty.clone());
-        (env, ty)
-    }
-}
+use typeck::{constraint::Constraint,
+             subst::{SubstVar, Substitution},
+             ty::Ty,
+             util::Env};
 
 fn add_annotations_to_decls(decls: Vec<Decl<()>>) -> Vec<Decl<Ty>> {
-    let mut env = HamtMap::new();
+    let mut env = Env::new();
 
     // I can't use a .map() call here; borrowck gets mad...
     let mut out = Vec::with_capacity(decls.len());
     for decl in decls {
         let decl = add_annotations_to_decl(env.clone(), decl);
-        env = env.plus(decl.name, decl.aux.clone());
+        env = env.put(decl.name, decl.aux.clone());
         out.push(decl)
     }
     out
 }
 
-fn add_annotations_to_decl(env: HamtMap<Symbol, Ty>, decl: Decl<()>) -> Decl<Ty> {
-    let (env, ty) = get_or_fresh(env, decl.name);
+fn add_annotations_to_decl(env: Env, decl: Decl<()>) -> Decl<Ty> {
+    let (env, ty) = env.get(decl.name);
     Decl {
         name: decl.name,
         args: decl.args

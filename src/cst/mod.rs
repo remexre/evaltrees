@@ -6,8 +6,7 @@ mod parser;
 use symbol::Symbol;
 
 use ast::{Literal, Op, Pattern};
-
-pub use self::parser::parse_decls;
+pub use cst::parser::parse_decls;
 
 /// A function or value declaration.
 #[derive(Clone, Debug, PartialEq)]

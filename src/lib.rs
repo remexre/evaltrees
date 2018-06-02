@@ -1,7 +1,8 @@
 //! The evaltrees parser, typechecker, and evaluator.
 #![warn(missing_docs)]
 
-extern crate hamt_rs;
+#[macro_use]
+extern crate failure;
 extern crate lalrpop_util;
 #[macro_use]
 extern crate lazy_static;
