@@ -1,7 +1,7 @@
 # Syntax Accepted By Evaltrees
 
 Evaltrees accepts a series of declarations, as well as an expression to evaluate.
-Their syntax is described as follows:
+Their syntax is described informally as follows (All operator precedences and associativities follow the OCaml rules):
 
 ```plain
 decl ::= name pattern* '=' expr
@@ -22,3 +22,5 @@ binop ::= '+' | '-' | '*' | '/' | 'mod' | '::'
 
 literal ::= '[]' | digit+
 ```
+
+The actual grammar used is [here](../../src/cst/parser/grammar.lalrpop).
