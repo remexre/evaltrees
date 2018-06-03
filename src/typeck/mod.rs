@@ -28,7 +28,7 @@ pub enum TypeError {
     CantUnify(Ty, Ty),
 
     /// The occurs check was failed (we've got an infinite type on our hands!).
-    #[fail(display = "{} occurs within {}", _0, _1)]
+    #[fail(display = "{} occurs within {} when solving {} ~ {}", _0, _1, _0, _1)]
     Occurs(SubstVar, Ty),
 }
 
@@ -36,12 +36,14 @@ pub enum TypeError {
 pub fn typeck_decls(decls: Vec<Decl<()>>) -> Result<Vec<Decl<Type>>, TypeError> {
     // First, annotate the decls with type variables.
     let mut decls = add_annotations_to_decls(decls);
+    debug!("{:?}", decls);
 
     // Next, collect the type constraints and unify them into a substitution.
     let constraints = decls
         .iter()
         .flat_map(|decl| decl.collect_constraints())
         .collect();
+    debug!("constraints = {:?}", constraints);
     let subst = unify(constraints)?;
 
     // Then, apply the substitution across the AST.
@@ -62,7 +64,9 @@ pub fn typeck_expr(expr: Expr<()>, decls: &[Decl<Type>]) -> Result<Expr<Type>, T
     }
 
     let mut expr = expr.add_type_annotations(&mut env);
+    debug!("{:?}", expr);
     let constraints = expr.collect_constraints();
+    debug!("constraints = {:?}", constraints);
     let subst = unify(constraints)?;
     expr.apply_subst(&subst);
     Ok(expr.reify())
@@ -80,7 +84,7 @@ fn unify(constraints: BTreeSet<Constraint>) -> Result<Substitution, TypeError> {
 
     let mut subst = Substitution::new();
     while let Some(Constraint(s, t)) = constraints.pop() {
-        trace!("Applying constraint {} ~ {}...", s, t);
+        debug!("Applying constraint {} ~ {}...", s, t);
         if s == t {
             // Yay, nothing to do.
         } else {
