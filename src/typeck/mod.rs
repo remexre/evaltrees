@@ -37,18 +37,12 @@ pub fn typeck_decls(decls: Vec<Decl<()>>) -> Result<Vec<Decl<Type>>, TypeError> 
     let subst = unify(constraints)?;
 
     // Then, apply the substitution across the AST.
-    for decl in decls.iter_mut() {
+    for decl in &mut decls {
         decl.apply_subst(&subst);
     }
 
     // Finally, reify the types across the AST.
-    let decls = decls
-        .into_iter()
-        .map(|decl| {
-            let decl = decl.reify();
-            decl
-        })
-        .collect();
+    let decls = decls.into_iter().map(|decl| decl.reify()).collect();
     Ok(decls)
 }
 
@@ -83,14 +77,14 @@ fn unify(constraints: BTreeSet<Constraint>) -> Result<Substitution, TypeError> {
         } else {
             match (s, t) {
                 (Ty::Var(x), t) => {
-                    for Constraint(cs, ct) in constraints.iter_mut() {
+                    for &mut Constraint(ref mut cs, ref mut ct) in &mut constraints {
                         cs.sub(x, &t);
                         ct.sub(x, &t);
                     }
                     subst.add(x, t);
                 }
                 (s, Ty::Var(x)) => {
-                    for Constraint(cs, ct) in constraints.iter_mut() {
+                    for &mut Constraint(ref mut cs, ref mut ct) in &mut constraints {
                         cs.sub(x, &s);
                         ct.sub(x, &s);
                     }

@@ -65,7 +65,7 @@ fn run(options: Options) -> Result<(), Error> {
     // Convert the CST to an AST.
     let decls = decls
         .into_iter()
-        .map(|decl| decl.to_ast())
+        .map(|decl| decl.into_ast())
         .collect::<Result<Vec<_>, _>>()?;
 
     // Type-check the AST.
@@ -73,7 +73,7 @@ fn run(options: Options) -> Result<(), Error> {
 
     // Actually run the thing.
     if let Some(expr) = options.expr {
-        let expr = expr.parse::<CstExpr>()?.to_ast()?;
+        let expr = expr.parse::<CstExpr>()?.into_ast()?;
         let expr = typeck_expr(expr, &decls)?;
         plain::run(decls, expr)
     } else {

@@ -1,3 +1,4 @@
+#[cfg_attr(feature = "cargo-clippy", allow(clippy))]
 #[cfg_attr(rustfmt, rustfmt_skip)]
 mod grammar;
 #[cfg(test)]

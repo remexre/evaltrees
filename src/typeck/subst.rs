@@ -20,7 +20,7 @@ impl SubstVar {
 }
 
 /// A substitution.
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Default, PartialEq)]
 pub struct Substitution(HashMap<SubstVar, Ty>);
 
 impl Substitution {
@@ -32,12 +32,12 @@ impl Substitution {
         for ty in self.0.values_mut() {
             ty.apply_subst(&subst);
         }
-        assert!(self.0.insert(var, ty.clone()).is_none());
+        assert!(self.0.insert(var, ty).is_none());
     }
 
     /// Looks up the type corresponding to the given variable.
     pub fn get(&self, var: SubstVar) -> Option<Ty> {
-        self.0.get(&var).map(|ty| ty.clone())
+        self.0.get(&var).cloned()
     }
 
     /// Creates a new, empty substitution.
@@ -92,7 +92,7 @@ impl Ty {
 impl Decl<Ty> {
     /// Applies a substitution to the declaration.
     pub(in typeck) fn apply_subst(&mut self, subst: &Substitution) {
-        for arg in self.args.iter_mut() {
+        for arg in &mut self.args {
             arg.apply_subst(subst);
         }
         self.body.apply_subst(subst);
