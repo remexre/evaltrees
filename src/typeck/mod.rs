@@ -17,7 +17,6 @@ use typeck::{annotations::add_annotations_to_decls, constraint::Constraint, subs
 #[derive(Clone, Debug, Fail, PartialEq)]
 pub enum TypeError {
     /// A constraint between two types couldn't be unified.
-    // TODO: display-attr crate for Ty
     // TODO: collect type errors and continue to unify (incl. on errors) to be
     // able to display multiple, and display them better?
     #[fail(display = "Can't unify {:?} with {:?}", _0, _1)]
@@ -47,7 +46,7 @@ pub fn typeck_decls(decls: Vec<Decl<()>>) -> Result<Vec<Decl<Type>>, TypeError> 
 }
 
 /// Type-checks an expression given the declarations that are in scope.
-pub fn typeck_expr(expr: Expr, decls: &[Decl<Type>]) -> Result<Expr<Type>, TypeError> {
+pub fn typeck_expr(expr: Expr<()>, decls: &[Decl<Type>]) -> Result<Expr<Type>, TypeError> {
     let mut env = AnnotEnv::new();
     for decl in decls {
         env.put(decl.name, decl.aux().unreify());

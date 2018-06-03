@@ -31,7 +31,7 @@ impl Display for Name {
     }
 }
 
-struct TypeDisplay<'a>(&'a Type, &'a mut Vec<usize>, &'a mut usize, usize);
+struct TypeDisplay<'a>(&'a Type, &'a mut Vec<usize>, &'a mut usize, u8);
 
 // TODO: Clean this up!!!
 impl<'a> TypeDisplay<'a> {
@@ -79,12 +79,12 @@ impl<'a> TypeDisplay<'a> {
                 write!(fmt, "int")?;
             }
             Type::List(ref t) => {
-                if prec > 0 {
+                if prec > 1 {
                     write!(fmt, "(")?;
                 }
                 TypeDisplay(&**t, self.1, self.2, 1).fmt(fmt)?;
                 write!(fmt, " list")?;
-                if prec > 0 {
+                if prec > 1 {
                     write!(fmt, ")")?;
                 }
             }

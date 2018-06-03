@@ -4,12 +4,18 @@ Evaltrees accepts a series of declarations, as well as an expression to evaluate
 Their syntax is described informally as follows (All operator precedences and associativities follow the OCaml rules):
 
 ```plain
-decl ::= name pattern* '=' expr
+decls ::= (decl ';;')*
+
+decl ::= name pattern2* '=' expr
 
 pattern ::= name
          |  literal
-         |  pattern '::' pattern
+         |  pattern2 '::' pattern
          |  '(' pattern ')'
+pattern2 ::= name
+          |  literal
+          |  pattern '::' pattern
+          |  '(' pattern ')'
 
 expr ::= name
       |  literal

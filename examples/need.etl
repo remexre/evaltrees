@@ -1,2 +1,2 @@
-double x = x + x;
-triple x = x + x + x;
+double x = x + x;;
+triple x = x + x + x;;

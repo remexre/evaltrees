@@ -15,10 +15,10 @@ pub enum ASTConversionError {
 }
 
 /// Checks that the arguments contain no duplicate variables.
-pub fn check_args(args: &[Pattern]) -> Result<(), Symbol> {
+pub fn check_args<Aux>(args: &[Pattern<Aux>]) -> Result<(), Symbol> {
     let mut vars = BTreeSet::new();
 
-    fn check_arg(vars: &mut BTreeSet<Symbol>, arg: &Pattern) -> Result<(), Symbol> {
+    fn check_arg<Aux>(vars: &mut BTreeSet<Symbol>, arg: &Pattern<Aux>) -> Result<(), Symbol> {
         match *arg {
             Pattern::Binding(n, _) => if vars.insert(n) {
                 Ok(())
@@ -41,7 +41,7 @@ pub fn check_args(args: &[Pattern]) -> Result<(), Symbol> {
 
 impl CstDecl {
     /// Converts a CST decl to an AST decl.
-    pub fn into_ast(self) -> Result<Decl, ASTConversionError> {
+    pub fn into_ast(self) -> Result<Decl<()>, ASTConversionError> {
         check_args(&self.args).map_err(|n| ASTConversionError::DuplicateArgVar(self.name, n))?;
         Ok(Decl {
             name: self.name,
@@ -54,7 +54,7 @@ impl CstDecl {
 
 impl CstExpr {
     /// Converts a CST decl to an AST decl.
-    pub fn into_ast(self) -> Result<Expr, ASTConversionError> {
+    pub fn into_ast(self) -> Result<Expr<()>, ASTConversionError> {
         match self {
             CstExpr::List(mut es) => {
                 let mut expr = Expr::Literal(Literal::Nil, ());

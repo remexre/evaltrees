@@ -45,7 +45,7 @@ pub struct Decl {
     pub name: Symbol,
 
     /// The arguments to the function. If empty, the decl is for a value.
-    pub args: Vec<Pattern>,
+    pub args: Vec<Pattern<()>>,
 
     /// The body of the function, or the expression assigned to the value.
     pub body: Expr,

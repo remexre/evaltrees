@@ -9,6 +9,7 @@ extern crate log;
 extern crate stderrlog;
 #[macro_use]
 extern crate structopt;
+extern crate symbol;
 
 mod options;
 mod plain;

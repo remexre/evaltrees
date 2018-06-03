@@ -2,6 +2,8 @@
 #![warn(missing_docs)]
 
 #[macro_use]
+extern crate display_attr;
+#[macro_use]
 extern crate failure;
 extern crate lalrpop_util;
 #[macro_use]

@@ -49,8 +49,7 @@ impl Expr<Ty> {
     pub(in typeck) fn reify(self) -> Expr<Type> {
         let mut vars = LinkedHashSet::new();
         self.collect_vars(&mut vars);
-        let mut env = vars.into_iter().collect::<Vec<_>>();
-        env.reverse();
+        let env = vars.into_iter().collect::<Vec<_>>();
         self.reify_in(&env)
     }
 

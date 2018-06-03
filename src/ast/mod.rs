@@ -7,7 +7,7 @@ use symbol::Symbol;
 
 /// A function or value declaration.
 #[derive(Clone, Debug, PartialEq)]
-pub struct Decl<Aux = ()> {
+pub struct Decl<Aux> {
     /// The name of the function or value.
     pub name: Symbol,
 
@@ -37,7 +37,7 @@ impl<Aux: Clone> Decl<Aux> {
 
 /// A pattern.
 #[derive(Clone, Debug, PartialEq)]
-pub enum Pattern<Aux = ()> {
+pub enum Pattern<Aux> {
     /// A name.
     Binding(Symbol, Aux),
 
@@ -67,15 +67,18 @@ impl<Aux: Clone> Pattern<Aux> {
 }
 
 /// An expression.
-#[derive(Clone, Debug, PartialEq)]
-pub enum Expr<Aux = ()> {
+#[derive(Clone, Debug, DisplayAttr, PartialEq)]
+pub enum Expr<Aux> {
     /// A literal value.
+    #[display(fmt = "{}", _0)]
     Literal(Literal, Aux),
 
     /// A binary operator.
+    #[display(fmt = "{}({}, {})", _0, _1, _2)]
     Op(Op, Box<Expr<Aux>>, Box<Expr<Aux>>, Aux),
 
     /// A variable.
+    #[display(fmt = "{}", _0)]
     Variable(Symbol, Aux),
 }
 
@@ -98,38 +101,47 @@ impl<Aux: Clone> Expr<Aux> {
 }
 
 /// A binary operator.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, DisplayAttr, PartialEq)]
 #[allow(missing_docs)]
 pub enum Op {
     /// Addition.
+    #[display(fmt = "Add")]
     Add,
 
     /// Function application.
+    #[display(fmt = "App")]
     App,
 
-    /// Consing.
+    /// List construction.
+    #[display(fmt = "Cons")]
     Cons,
 
     /// Division.
+    #[display(fmt = "Div")]
     Div,
 
     /// Modulus.
+    #[display(fmt = "Mod")]
     Mod,
 
     /// Multiplication.
+    #[display(fmt = "Mul")]
     Mul,
 
     /// Subtraction.
+    #[display(fmt = "Sub")]
     Sub,
 }
 
 /// A literal value.
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, DisplayAttr, PartialEq)]
 pub enum Literal {
     /// An (unsigned) integer.
+    #[display(fmt = "{}", _0)]
     Int(usize),
 
     /// An empty list.
+    #[display(fmt = "[]")]
     Nil,
 }
 

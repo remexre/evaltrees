@@ -5,12 +5,13 @@ use cst::{Decl, Expr};
 
 grammar;
 
-pub Decls = DeclSemicolon*;
+pub Decls = DeclSemicolons*;
 
-DeclSemicolon: Decl = <d: Decl> ";" => d;
+DeclSemicolons: Decl =
+	<d: Decl> ";;" => d;
 
 pub Decl: Decl =
-    <name: Name> <args: Pattern*> "=" <body: Expr> => Decl { name, args, body };
+    <name: Name> <args: Pattern2*> "=" <body: Expr> => Decl { name, args, body };
 
 pub Expr: Expr = {
     <l: Expr2> "::" <r: Expr> => Expr::Op(Op::Cons, Box::new(l), Box::new(r)),
@@ -48,12 +49,12 @@ Expr5: Expr = {
 
 SemicolonExpr: Expr = ";" <e: Expr> => e;
 
-Pattern: Pattern = {
+Pattern: Pattern<()> = {
     <l: Pattern2> "::" <r: Pattern> => Pattern::Cons(Box::new(l), Box::new(r), ()),
     Pattern2,
 };
 
-Pattern2: Pattern = {
+Pattern2: Pattern<()> = {
     "(" <p: Pattern> ")" => p,
     Name => Pattern::Binding(<>, ()),
     Literal => Pattern::Literal(<>, ()),
