@@ -11,7 +11,7 @@ impl Decl<Ty> {
             arg.collect_vars(&mut vars);
         }
 
-        let mut env = vars.into_iter().collect::<Vec<_>>();
+        let env = vars.into_iter().collect::<Vec<_>>();
         let mut ty = self.aux.reify_in(&env);
         for _ in &env {
             ty = Type::Forall(Box::new(ty));

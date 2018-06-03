@@ -49,32 +49,42 @@ impl Substitution {
 impl Ty {
     /// Applies a substitution to the type.
     pub fn apply_subst(&mut self, subst: &Substitution) {
-        match self {
-            Ty::Func(l, r) => {
+        let new_self = match *self {
+            Ty::Func(ref mut l, ref mut r) => {
                 l.apply_subst(subst);
                 r.apply_subst(subst);
+                None
             }
-            Ty::Int => {}
-            Ty::List(t) => t.apply_subst(subst),
-            Ty::Var(v) => if let Some(ty) = subst.get(*v) {
-                *self = ty;
-            },
+            Ty::Int => None,
+            Ty::List(ref mut t) => {
+                t.apply_subst(subst);
+                None
+            }
+            Ty::Var(v) => subst.get(v),
+        };
+        if let Some(new_self) = new_self {
+            *self = new_self;
         }
     }
 
     /// Applies a single replacement to the type.
     pub fn sub(&mut self, var: SubstVar, ty: &Ty) {
-        match self {
+        let new_self = match self {
             Ty::Func(l, r) => {
                 l.sub(var, ty);
                 r.sub(var, ty);
+                None
             }
-            Ty::Int => {}
-            Ty::List(t) => t.sub(var, ty),
-            Ty::Var(v) if *v == var => {
-                *self = ty.clone();
+            Ty::Int => None,
+            Ty::List(t) => {
+                t.sub(var, ty);
+                None
             }
-            Ty::Var(_) => {}
+            Ty::Var(v) if *v == var => Some(ty.clone()),
+            Ty::Var(_) => None,
+        };
+        if let Some(new_self) = new_self {
+            *self = new_self;
         }
     }
 }

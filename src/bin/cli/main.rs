@@ -1,5 +1,4 @@
 extern crate evaltrees;
-#[macro_use]
 extern crate failure;
 #[cfg(not(debug_assertions))]
 #[macro_use]
