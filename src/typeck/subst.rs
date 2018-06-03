@@ -5,7 +5,8 @@ use ast::{Decl, Expr, Pattern};
 use typeck::ty::Ty;
 
 /// A variable present in a substitution.
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, DisplayAttr, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[display(fmt = "?{}", _0)]
 pub struct SubstVar(usize);
 
 impl SubstVar {

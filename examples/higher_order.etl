@@ -1,0 +1,8 @@
+map f [] = [];;
+map f (h::t) = f h :: map f t;;
+
+foldl f x [] = x;;
+foldl f x (h::t) = foldl f (f x h) t;;
+
+foldr f [] x = x;;
+foldr f (h::t) x = f h (foldr f t x);;

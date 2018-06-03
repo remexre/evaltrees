@@ -1,0 +1,7 @@
+ifzero  0 x _y = x;;
+ifzero _n _x y = y;;
+
+foo = [[1; 2]; [3; 4]];;
+bar = [1; 2; 3; 4];;
+
+baz = ifzero 0 foo bar;;
