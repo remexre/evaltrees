@@ -3,6 +3,8 @@ use linked_hash_set::LinkedHashSet;
 use ast::{Decl, Expr, Pattern, Type};
 use typeck::{subst::SubstVar, ty::Ty, util::UnreifyEnv};
 
+// TODO: This reification is unsound in the presence of higher rank polymorphism.
+
 impl Decl<Ty> {
     /// Reifies a declaration.
     pub(in typeck) fn reify(self) -> Decl<Type> {
@@ -43,14 +45,6 @@ impl Expr<Ty> {
                 ty.collect_vars(vars);
             }
         }
-    }
-
-    /// Reifies an expression.
-    pub(in typeck) fn reify(self) -> Expr<Type> {
-        let mut vars = LinkedHashSet::new();
-        self.collect_vars(&mut vars);
-        let env = vars.into_iter().collect::<Vec<_>>();
-        self.reify_in(&env)
     }
 
     fn reify_in(self, env: &[SubstVar]) -> Expr<Type> {

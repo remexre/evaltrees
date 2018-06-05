@@ -11,12 +11,13 @@ mod util;
 
 use std::collections::BTreeSet;
 
-use ast::{Decl, Expr, Type};
-use typeck::{annotations::add_annotations_to_decls,
-             constraint::Constraint,
+use symbol::Symbol;
+
+use ast::{Decl, Type};
+use typeck::{constraint::Constraint,
              subst::{SubstVar, Substitution},
              ty::Ty,
-             util::AnnotEnv};
+             util::{group, toposort, AnnotEnv}};
 
 /// An error during typechecking.
 #[derive(Clone, Debug, Fail, PartialEq)]
@@ -27,16 +28,50 @@ pub enum TypeError {
     #[fail(display = "Can't unify {} with {}", _0, _1)]
     CantUnify(Ty, Ty),
 
+    /// A mutually-recursive declaration was found. We don't currently support these.
+    #[fail(display = "Mutual recursion involving {}", _0)]
+    MutualRecursion(Symbol),
+
     /// The occurs check was failed (we've got an infinite type on our hands!).
     #[fail(display = "{} occurs within {} when solving {} ~ {}", _0, _1, _0, _1)]
     Occurs(SubstVar, Ty),
 }
 
 /// Completely type-checks a series of declarations.
-pub fn typeck_decls(decls: Vec<Decl<()>>) -> Result<Vec<Decl<Type>>, TypeError> {
-    // First, annotate the decls with type variables.
-    let mut decls = add_annotations_to_decls(decls);
-    debug!("{:?}", decls);
+pub fn typeck_decls(
+    decls: Vec<Decl<()>>,
+    mut checked: Vec<Decl<Type>>,
+) -> Result<Vec<Decl<Type>>, TypeError> {
+    let decl_sets = toposort(group(decls, |decl| decl.name), |decls| {
+        let mut vars = BTreeSet::new();
+        for decl in decls {
+            vars.extend(decl.freevars());
+        }
+        vars.into_iter().collect()
+    }).map_err(TypeError::MutualRecursion)?;
+
+    for decl_set in decl_sets {
+        let decl_set = typeck_decls_with(decl_set, &checked)?;
+        checked.extend(decl_set);
+    }
+    Ok(checked)
+}
+
+fn typeck_decls_with(
+    decls: Vec<Decl<()>>,
+    checked: &[Decl<Type>],
+) -> Result<Vec<Decl<Type>>, TypeError> {
+    // First, create an environment containing the already-checked decls and use it to annotate
+    // the decls.
+    let mut env = AnnotEnv::new();
+    for decl in checked {
+        env.put(decl.name, decl.aux().unreify());
+    }
+    env.put(decls[0].name, Ty::fresh());
+    let mut decls = decls
+        .into_iter()
+        .map(|decl| decl.add_type_annotations(&mut env.clone()))
+        .collect::<Vec<_>>();
 
     // Next, collect the type constraints and unify them into a substitution.
     let constraints = decls
@@ -54,22 +89,6 @@ pub fn typeck_decls(decls: Vec<Decl<()>>) -> Result<Vec<Decl<Type>>, TypeError> 
     // Finally, reify the types across the AST.
     let decls = decls.into_iter().map(|decl| decl.reify()).collect();
     Ok(decls)
-}
-
-/// Type-checks an expression given the declarations that are in scope.
-pub fn typeck_expr(expr: Expr<()>, decls: &[Decl<Type>]) -> Result<Expr<Type>, TypeError> {
-    let mut env = AnnotEnv::new();
-    for decl in decls {
-        env.put(decl.name, decl.aux().unreify());
-    }
-
-    let mut expr = expr.add_type_annotations(&mut env);
-    debug!("{:?}", expr);
-    let constraints = expr.collect_constraints();
-    debug!("constraints = {:?}", constraints);
-    let subst = unify(constraints)?;
-    expr.apply_subst(&subst);
-    Ok(expr.reify())
 }
 
 /// Generates a substitution from a set of constraints.

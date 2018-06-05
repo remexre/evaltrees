@@ -19,8 +19,9 @@ use std::fs::File;
 use std::io::Read;
 use std::process::exit;
 
+use evaltrees::ast::Decl;
 use evaltrees::cst::{parse_decls, Expr as CstExpr};
-use evaltrees::typeck::{typeck_decls, typeck_expr};
+use evaltrees::typeck::typeck_decls;
 use failure::Error;
 use structopt::StructOpt;
 
@@ -70,13 +71,19 @@ fn run(options: Options) -> Result<(), Error> {
         .collect::<Result<Vec<_>, _>>()?;
 
     // Type-check the AST.
-    let decls = typeck_decls(decls)?;
+    let decls = typeck_decls(decls, Vec::new())?;
 
     // Actually run the thing.
     if let Some(expr) = options.expr {
         let expr = expr.parse::<CstExpr>()?.into_ast()?;
-        let expr = typeck_expr(expr, &decls)?;
-        plain::run(decls, expr)
+        let expr_decl = Decl {
+            name: "".into(),
+            args: vec![],
+            body: expr,
+            aux: (),
+        };
+        let decls = typeck_decls(vec![expr_decl], decls)?;
+        plain::run(decls)
     } else {
         repl::run(decls)
     }

@@ -13,6 +13,16 @@ Expression evaluations can be show as concrete or abstract syntax.
 
 See `doc/syntax.md` for a description of the language's syntax.
 
+## Missing Features
+
+(These are features that will probably not be implemented (although PRs are welcome))
+
+ - Mutual Recursion
+   - Currently, this breaks typechecking
+ - Polymorphic Recursion
+ - Higher-rank Polymorphism
+   - The reification procedure for types assumes rank-1 polymorphism
+
 ## License
 
 Licensed under either of

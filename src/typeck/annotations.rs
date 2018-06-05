@@ -1,19 +1,6 @@
 use ast::{Decl, Expr, Pattern};
 use typeck::{ty::Ty, util::AnnotEnv};
 
-pub fn add_annotations_to_decls(decls: Vec<Decl<()>>) -> Vec<Decl<Ty>> {
-    let mut env = AnnotEnv::new();
-
-    for decl in &decls {
-        env.get(decl.name);
-    }
-
-    decls
-        .into_iter()
-        .map(|decl| decl.add_type_annotations(&mut env.clone()))
-        .collect()
-}
-
 impl Decl<()> {
     pub(in typeck) fn add_type_annotations(self, env: &mut AnnotEnv) -> Decl<Ty> {
         let ty = env.get(self.name);

@@ -3,6 +3,8 @@
 mod convert;
 mod display;
 
+use std::collections::BTreeSet;
+
 use symbol::Symbol;
 
 /// A function or value declaration.
@@ -25,6 +27,18 @@ impl<Aux> Decl<Aux> {
     /// Gets the auxiliary data as a reference.
     pub fn aux_ref(&self) -> &Aux {
         &self.aux
+    }
+
+    /// Returns the free variables of a declaration.
+    pub fn freevars(&self) -> BTreeSet<Symbol> {
+        let mut vars = self.body.freevars();
+        for arg in &self.args {
+            for var in arg.freevars() {
+                vars.remove(&var);
+            }
+        }
+        vars.remove(&self.name);
+        vars
     }
 }
 
@@ -55,6 +69,21 @@ impl<Aux> Pattern<Aux> {
             Pattern::Binding(_, ref aux)
             | Pattern::Cons(_, _, ref aux)
             | Pattern::Literal(_, ref aux) => aux,
+        }
+    }
+
+    /// Returns the bound variables of a pattern.
+    pub fn freevars(&self) -> BTreeSet<Symbol> {
+        match *self {
+            Pattern::Binding(var, _) => {
+                let mut set = BTreeSet::new();
+                set.insert(var);
+                set
+            }
+            Pattern::Cons(ref l, ref r, _) => {
+                l.freevars().into_iter().chain(r.freevars()).collect()
+            }
+            Pattern::Literal(_, _) => BTreeSet::new(),
         }
     }
 }
@@ -88,6 +117,19 @@ impl<Aux> Expr<Aux> {
         match *self {
             Expr::Literal(_, ref aux) | Expr::Op(_, _, _, ref aux) | Expr::Variable(_, ref aux) => {
                 aux
+            }
+        }
+    }
+
+    /// Returns the free variables of an expression.
+    pub fn freevars(&self) -> BTreeSet<Symbol> {
+        match *self {
+            Expr::Literal(_, _) => BTreeSet::new(),
+            Expr::Op(_, ref l, ref r, _) => l.freevars().into_iter().chain(r.freevars()).collect(),
+            Expr::Variable(var, _) => {
+                let mut set = BTreeSet::new();
+                set.insert(var);
+                set
             }
         }
     }
