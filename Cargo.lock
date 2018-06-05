@@ -162,7 +162,7 @@ dependencies = [
 
 [[package]]
 name = "display_attr"
-version = "0.1.0"
+version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "proc-macro2 0.4.5 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -196,7 +196,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 name = "evaltrees"
 version = "0.0.1"
 dependencies = [
- "display_attr 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "display_attr 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "either 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "human-panic 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -1036,7 +1036,7 @@ dependencies = [
 "checksum debug_unreachable 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "9a032eac705ca39214d169f83e3d3da290af06d8d1d344d1baad2fd002dca4b3"
 "checksum diff 0.1.11 (registry+https://github.com/rust-lang/crates.io-index)" = "3c2b69f912779fbb121ceb775d74d51e915af17aaebc38d28a592843a2dd0a3a"
 "checksum digest 0.7.2 (registry+https://github.com/rust-lang/crates.io-index)" = "00a49051fef47a72c9623101b19bd71924a45cca838826caae3eaa4d00772603"
-"checksum display_attr 0.1.0 (registry+https://github.com/rust-lang/crates.io-index)" = "9d922fd0dfb21f87163dd47e4425ad0dff89daa10997fc7ff28c6fc46cb71046"
+"checksum display_attr 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "afab917971b4bed4a9ef2cd36bc2be9ac42adca6201d04a582e4e3dd98931e8a"
 "checksum docopt 0.8.3 (registry+https://github.com/rust-lang/crates.io-index)" = "d8acd393692c503b168471874953a2531df0e9ab77d0b6bbc582395743300a4a"
 "checksum either 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "3be565ca5c557d7f59e7cfcf1844f9e3033650c929c6566f511e8005f205c1d0"
 "checksum ena 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)" = "cabe5a5078ac8c506d3e4430763b1ba9b609b1286913e7d08e581d1c2de9b7e5"
