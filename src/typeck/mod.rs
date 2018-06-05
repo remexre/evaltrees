@@ -9,7 +9,7 @@ mod tests;
 mod ty;
 mod util;
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeSet, HashSet};
 
 use symbol::Symbol;
 
@@ -28,6 +28,11 @@ pub enum TypeError {
     #[fail(display = "Can't unify {} with {}", _0, _1)]
     CantUnify(Ty, Ty),
 
+    /// A variable was undefined. This technically isn't a type error, but the error is only found
+    /// during type-checking.
+    #[fail(display = "Undefined variables: {:?}", _0)]
+    Freevars(BTreeSet<Symbol>),
+
     /// A mutually-recursive declaration was found. We don't currently support these.
     #[fail(display = "Mutual recursion involving {}", _0)]
     MutualRecursion(Symbol),
@@ -42,7 +47,24 @@ pub fn typeck_decls(
     decls: Vec<Decl<()>>,
     mut checked: Vec<Decl<Type>>,
 ) -> Result<Vec<Decl<Type>>, TypeError> {
-    let decl_sets = toposort(group(decls, |decl| decl.name), |decls| {
+    // Check for free variables.
+    let mut freevars = decls
+        .iter()
+        .flat_map(|decl| decl.freevars())
+        .collect::<BTreeSet<_>>();
+    for decl in &decls {
+        freevars.remove(&decl.name);
+    }
+    for decl in &checked {
+        freevars.remove(&decl.name);
+    }
+    if !freevars.is_empty() {
+        return Err(TypeError::Freevars(freevars));
+    }
+
+    // Sort the decls into sets.
+    let known = checked.iter().map(|decl| decl.name).collect::<HashSet<_>>();
+    let decls = toposort(group(decls, |decl| decl.name), known, |decls| {
         let mut vars = BTreeSet::new();
         for decl in decls {
             vars.extend(decl.freevars());
@@ -50,9 +72,10 @@ pub fn typeck_decls(
         vars.into_iter().collect()
     }).map_err(TypeError::MutualRecursion)?;
 
-    for decl_set in decl_sets {
-        let decl_set = typeck_decls_with(decl_set, &checked)?;
-        checked.extend(decl_set);
+    // Check each "level" of the decls.
+    for decl in decls {
+        let decl = typeck_decls_with(decl, &checked)?;
+        checked.extend(decl);
     }
     Ok(checked)
 }
@@ -61,11 +84,16 @@ fn typeck_decls_with(
     decls: Vec<Decl<()>>,
     checked: &[Decl<Type>],
 ) -> Result<Vec<Decl<Type>>, TypeError> {
+    // We assume later on that at least one decl exists.
+    if decls.is_empty() {
+        return Ok(Vec::new());
+    }
+
     // First, create an environment containing the already-checked decls and use it to annotate
     // the decls.
     let mut env = AnnotEnv::new();
     for decl in checked {
-        env.put(decl.name, decl.aux().unreify());
+        env.put_poly(decl.name, decl.aux());
     }
     env.put(decls[0].name, Ty::fresh());
     let mut decls = decls
@@ -78,6 +106,7 @@ fn typeck_decls_with(
         .iter()
         .flat_map(|decl| decl.collect_constraints())
         .collect();
+    debug!("decls = {:?}", decls);
     debug!("constraints = {:?}", constraints);
     let subst = unify(constraints)?;
 
@@ -92,8 +121,6 @@ fn typeck_decls_with(
 }
 
 /// Generates a substitution from a set of constraints.
-///
-/// Note that no occurs check is currently implemented.
 fn unify(constraints: BTreeSet<Constraint>) -> Result<Substitution, TypeError> {
     // We go BTreeSet->Vec instead of working with Vecs all the way through to
     // ensure uniqueness, and because it feels semantically closer to what we

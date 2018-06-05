@@ -12,8 +12,13 @@ impl Decl<Ty> {
         for arg in &self.args {
             arg.collect_vars(&mut vars);
         }
+        self.body.collect_vars(&mut vars);
 
-        let env = vars.into_iter().collect::<Vec<_>>();
+        // https://github.com/alexheretic/linked-hash-set/issues/4 would let this be implemented
+        // more efficiently.
+        let mut env = vars.into_iter().collect::<Vec<_>>();
+        env.reverse();
+
         let mut ty = self.aux.reify_in(&env);
         for _ in &env {
             ty = Type::Forall(Box::new(ty));
@@ -121,23 +126,23 @@ impl Ty {
 }
 
 impl Type {
-    pub(in typeck) fn unreify(self) -> Ty {
-        fn helper(mut ty: Type, mut env: UnreifyEnv) -> Ty {
+    pub(in typeck) fn unreify(&self) -> Ty {
+        fn helper(mut ty: &Type, mut env: UnreifyEnv) -> Ty {
             // First, peel off any Foralls.
-            while let Type::Forall(t) = ty {
+            while let Type::Forall(ref t) = *ty {
                 env.push(SubstVar::fresh());
-                ty = *t;
+                ty = t;
             }
 
-            match ty {
+            match *ty {
                 Type::Forall(_) => unreachable!(),
-                Type::Func(l, r) => {
-                    let l = helper(*l, env.clone());
-                    let r = helper(*r, env);
+                Type::Func(ref l, ref r) => {
+                    let l = helper(l, env.clone());
+                    let r = helper(r, env);
                     Ty::Func(Box::new(l), Box::new(r))
                 }
                 Type::Int => Ty::Int,
-                Type::List(t) => Ty::List(Box::new(helper(*t, env))),
+                Type::List(ref t) => Ty::List(Box::new(helper(t, env))),
                 Type::Var(n) => Ty::Var(env.get(n)),
             }
         }

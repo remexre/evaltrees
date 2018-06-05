@@ -3,6 +3,7 @@
 
 #[macro_use]
 extern crate display_attr;
+extern crate either;
 #[macro_use]
 extern crate failure;
 extern crate lalrpop_util;

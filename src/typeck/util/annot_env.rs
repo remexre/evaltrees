@@ -1,7 +1,9 @@
 use std::rc::Rc;
 
+use either::{Either, Left, Right};
 use symbol::Symbol;
 
+use ast::Type;
 use typeck::ty::Ty;
 
 /// A lexical environment used when assigning type variables.
@@ -15,7 +17,7 @@ pub struct AnnotEnv {
 
 #[derive(Clone, Debug)]
 pub enum EnvInner {
-    Cons(Symbol, Ty, Rc<EnvInner>),
+    Cons(Symbol, Either<Ty, Type>, Rc<EnvInner>),
     Nil,
 }
 
@@ -29,7 +31,10 @@ impl AnnotEnv {
             let next = match *cur {
                 EnvInner::Cons(n, ref ty, ref tl) => {
                     if n == name {
-                        return ty.clone();
+                        return match *ty {
+                            Left(ref ty) => ty.clone(),
+                            Right(ref ty) => ty.unreify(),
+                        };
                     } else {
                         tl.clone()
                     }
@@ -54,6 +59,12 @@ impl AnnotEnv {
     /// Creates a new binding.
     pub fn put(&mut self, name: Symbol, ty: Ty) {
         let inner = self.inner.take().unwrap();
-        self.inner = Some(Rc::new(EnvInner::Cons(name, ty, inner)));
+        self.inner = Some(Rc::new(EnvInner::Cons(name, Left(ty), inner)));
+    }
+
+    /// Creates a new binding based on a (possibly polymorphic) type.
+    pub fn put_poly(&mut self, name: Symbol, ty: Type) {
+        let inner = self.inner.take().unwrap();
+        self.inner = Some(Rc::new(EnvInner::Cons(name, Right(ty), inner)));
     }
 }

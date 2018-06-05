@@ -68,7 +68,7 @@ fn map_map() {
         )),
     )))));
 
-    let decls = typeck_decls(decls).unwrap();
+    let decls = typeck_decls(decls, Vec::new()).unwrap();
     assert_eq!(
         decls.into_iter().map(|decl| decl.aux).collect::<Vec<_>>(),
         vec![
@@ -126,7 +126,7 @@ fn poly_id() {
         },
     ];
 
-    let decls = typeck_decls(decls).unwrap();
+    let decls = typeck_decls(decls, Vec::new()).unwrap();
     assert_eq!(
         decls.into_iter().map(|decl| decl.aux).collect::<Vec<_>>(),
         vec![
