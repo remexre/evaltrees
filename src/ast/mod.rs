@@ -228,3 +228,14 @@ pub enum Type {
     /// A type variable.
     Var(usize),
 }
+
+impl Type {
+    /// Returns the "number of arguments" the type takes.
+    pub fn argn(&self) -> usize {
+        match *self {
+            Type::Bool | Type::Int | Type::List(_) | Type::Var(_) => 0,
+            Type::Forall(ref ty) => ty.argn(),
+            Type::Func(_, ref r) => 1 + r.argn(),
+        }
+    }
+}
