@@ -5,6 +5,10 @@ use typeck::subst::SubstVar;
 /// A partial type, used in substitutions.
 #[derive(Clone, Debug, DisplayAttr, Eq, PartialEq, Ord, PartialOrd)]
 pub enum Ty {
+    /// The type of a boolean.
+    #[display(fmt = "bool")]
+    Bool,
+
     /// A function type.
     #[display(fmt = "({} -> {})", _0, _1)]
     Func(Box<Ty>, Box<Ty>),
@@ -31,8 +35,8 @@ impl Ty {
     /// Returns the free variables of the type.
     pub fn freevars(&self) -> BTreeSet<SubstVar> {
         match *self {
+            Ty::Bool | Ty::Int => BTreeSet::new(),
             Ty::Func(ref l, ref r) => l.freevars().into_iter().chain(r.freevars()).collect(),
-            Ty::Int => BTreeSet::new(),
             Ty::List(ref t) => t.freevars(),
             Ty::Var(v) => {
                 let mut s = BTreeSet::new();

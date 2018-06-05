@@ -41,6 +41,12 @@ impl Decl<Ty> {
 impl Expr<Ty> {
     fn collect_vars(&self, vars: &mut LinkedHashSet<SubstVar>) {
         match *self {
+            Expr::If(ref c, ref t, ref e, ref ty) => {
+                c.collect_vars(vars);
+                t.collect_vars(vars);
+                e.collect_vars(vars);
+                ty.collect_vars(vars);
+            }
             Expr::Literal(_, ref ty) | Expr::Variable(_, ref ty) => {
                 ty.collect_vars(vars);
             }
@@ -54,6 +60,12 @@ impl Expr<Ty> {
 
     fn reify_in(self, env: &[SubstVar]) -> Expr<Type> {
         match self {
+            Expr::If(c, t, e, ty) => Expr::If(
+                Box::new(c.reify_in(env)),
+                Box::new(t.reify_in(env)),
+                Box::new(e.reify_in(env)),
+                ty.reify_in(env),
+            ),
             Expr::Literal(l, ty) => Expr::Literal(l, ty.reify_in(env)),
             Expr::Op(o, l, r, ty) => Expr::Op(
                 o,
@@ -100,7 +112,7 @@ impl Ty {
                 l.collect_vars(vars);
                 r.collect_vars(vars);
             }
-            Ty::Int => {}
+            Ty::Bool | Ty::Int => {}
             Ty::List(ref t) => t.collect_vars(vars),
             Ty::Var(v) => {
                 vars.insert(v);
@@ -110,6 +122,7 @@ impl Ty {
 
     fn reify_in(self, env: &[SubstVar]) -> Type {
         match self {
+            Ty::Bool => Type::Bool,
             Ty::Func(l, r) => Type::Func(Box::new(l.reify_in(env)), Box::new(r.reify_in(env))),
             Ty::Int => Type::Int,
             Ty::List(t) => Type::List(Box::new(t.reify_in(env))),
@@ -135,6 +148,7 @@ impl Type {
             }
 
             match *ty {
+                Type::Bool => Ty::Bool,
                 Type::Forall(_) => unreachable!(),
                 Type::Func(ref l, ref r) => {
                     let l = helper(l, env.clone());

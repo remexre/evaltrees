@@ -51,12 +51,12 @@ impl Ty {
     /// Applies a substitution to the type.
     pub fn apply_subst(&mut self, subst: &Substitution) {
         let new_self = match *self {
+            Ty::Bool | Ty::Int => None,
             Ty::Func(ref mut l, ref mut r) => {
                 l.apply_subst(subst);
                 r.apply_subst(subst);
                 None
             }
-            Ty::Int => None,
             Ty::List(ref mut t) => {
                 t.apply_subst(subst);
                 None
@@ -71,12 +71,12 @@ impl Ty {
     /// Applies a single replacement to the type.
     pub fn sub(&mut self, var: SubstVar, ty: &Ty) {
         let new_self = match self {
+            Ty::Bool | Ty::Int => None,
             Ty::Func(l, r) => {
                 l.sub(var, ty);
                 r.sub(var, ty);
                 None
             }
-            Ty::Int => None,
             Ty::List(t) => {
                 t.sub(var, ty);
                 None
@@ -105,6 +105,12 @@ impl Expr<Ty> {
     /// Applies a substitution to the expression.
     pub(in typeck) fn apply_subst(&mut self, subst: &Substitution) {
         match self {
+            Expr::If(c, t, e, ty) => {
+                c.apply_subst(subst);
+                t.apply_subst(subst);
+                e.apply_subst(subst);
+                ty.apply_subst(subst);
+            }
             Expr::Literal(_, ty) => ty.apply_subst(subst),
             Expr::Op(_, l, r, ty) => {
                 l.apply_subst(subst);

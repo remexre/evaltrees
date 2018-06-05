@@ -54,10 +54,13 @@ pub struct Decl {
 /// An expression.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Expr {
+    /// A conditional expression.
+    If(Box<Expr>, Box<Expr>, Box<Expr>),
+
     /// A list.
     ///
     /// In theory, this can't be empty (since that'd be the nil literal).
-    /// Either way, can't hurt to handle all cases.
+    /// Either way, one should handle all cases.
     List(Vec<Expr>),
 
     /// A literal value.

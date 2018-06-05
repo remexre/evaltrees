@@ -56,6 +56,12 @@ impl CstExpr {
     /// Converts a CST decl to an AST decl.
     pub fn into_ast(self) -> Result<Expr<()>, ASTConversionError> {
         match self {
+            CstExpr::If(c, t, e) => Ok(Expr::If(
+                Box::new(c.into_ast()?),
+                Box::new(t.into_ast()?),
+                Box::new(e.into_ast()?),
+                (),
+            )),
             CstExpr::List(mut es) => {
                 let mut expr = Expr::Literal(Literal::Nil, ());
                 while let Some(e) = es.pop() {

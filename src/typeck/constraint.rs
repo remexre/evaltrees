@@ -62,6 +62,15 @@ impl Expr<Ty> {
     /// Collects type constraints.
     pub(in typeck) fn collect_constraints(&self) -> BTreeSet<Constraint> {
         match *self {
+            Expr::If(ref c, ref t, ref e, ref ty) => vec![
+                Constraint(c.aux(), Ty::Bool),
+                Constraint(t.aux(), ty.clone()),
+                Constraint(e.aux(), ty.clone()),
+            ].into_iter()
+                .chain(c.collect_constraints())
+                .chain(t.collect_constraints())
+                .chain(e.collect_constraints())
+                .collect(),
             Expr::Literal(lit, ref ty) => once(Constraint(ty.clone(), lit.ty())).collect(),
             Expr::Op(Op::App, ref l, ref r, ref ty) => once(Constraint(
                 l.aux(),
@@ -94,6 +103,7 @@ impl Literal {
     /// Returns the type of the literal.
     fn ty(&self) -> Ty {
         match *self {
+            Literal::False | Literal::True => Ty::Bool,
             Literal::Int(_) => Ty::Int,
             Literal::Nil => Ty::List(Box::new(Ty::fresh())),
         }

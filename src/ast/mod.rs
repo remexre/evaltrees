@@ -98,6 +98,10 @@ impl<Aux: Clone> Pattern<Aux> {
 /// An expression.
 #[derive(Clone, Debug, DisplayAttr, PartialEq)]
 pub enum Expr<Aux> {
+    /// A conditional expression.
+    #[display(fmt = "If({}, {}, {})", _0, _1, _2)]
+    If(Box<Expr<Aux>>, Box<Expr<Aux>>, Box<Expr<Aux>>, Aux),
+
     /// A literal value.
     #[display(fmt = "{}", _0)]
     Literal(Literal, Aux),
@@ -115,15 +119,21 @@ impl<Aux> Expr<Aux> {
     /// Gets the auxiliary data as a reference.
     pub fn aux_ref(&self) -> &Aux {
         match *self {
-            Expr::Literal(_, ref aux) | Expr::Op(_, _, _, ref aux) | Expr::Variable(_, ref aux) => {
-                aux
-            }
+            Expr::If(_, _, _, ref aux)
+            | Expr::Literal(_, ref aux)
+            | Expr::Op(_, _, _, ref aux)
+            | Expr::Variable(_, ref aux) => aux,
         }
     }
 
     /// Returns the free variables of an expression.
     pub fn freevars(&self) -> BTreeSet<Symbol> {
         match *self {
+            Expr::If(ref c, ref t, ref e, _) => c.freevars()
+                .into_iter()
+                .chain(t.freevars())
+                .chain(e.freevars())
+                .collect(),
             Expr::Literal(_, _) => BTreeSet::new(),
             Expr::Op(_, ref l, ref r, _) => l.freevars().into_iter().chain(r.freevars()).collect(),
             Expr::Variable(var, _) => {
@@ -178,6 +188,10 @@ pub enum Op {
 /// A literal value.
 #[derive(Clone, Copy, Debug, DisplayAttr, PartialEq)]
 pub enum Literal {
+    /// The false boolean value.
+    #[display(fmt = "false")]
+    False,
+
     /// An (unsigned) integer.
     #[display(fmt = "{}", _0)]
     Int(usize),
@@ -185,11 +199,18 @@ pub enum Literal {
     /// An empty list.
     #[display(fmt = "[]")]
     Nil,
+
+    /// The true boolean value.
+    #[display(fmt = "true")]
+    True,
 }
 
 /// A (fully formed) type.
 #[derive(Clone, Debug, PartialEq)]
 pub enum Type {
+    /// The boolean type.
+    Bool,
+
     /// Universal quantification over a variable.
     ///
     /// De Brujin indices are used here, so no explicit names are needed.
@@ -198,7 +219,7 @@ pub enum Type {
     /// A function type.
     Func(Box<Type>, Box<Type>),
 
-    /// An integral type.
+    /// The unsigned integer type.
     Int,
 
     /// A list type.

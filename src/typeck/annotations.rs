@@ -21,6 +21,12 @@ impl Decl<()> {
 impl Expr<()> {
     pub(in typeck) fn add_type_annotations(self, env: &mut AnnotEnv) -> Expr<Ty> {
         match self {
+            Expr::If(c, t, e, ()) => Expr::If(
+                Box::new(c.add_type_annotations(env)),
+                Box::new(t.add_type_annotations(env)),
+                Box::new(e.add_type_annotations(env)),
+                Ty::fresh(),
+            ),
             Expr::Literal(l, ()) => Expr::Literal(l, Ty::fresh()),
             Expr::Op(op, l, r, ()) => Expr::Op(
                 op,

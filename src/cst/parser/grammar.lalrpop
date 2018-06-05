@@ -14,6 +14,8 @@ pub Decl: Decl =
     <name: Name> <args: Pattern2*> "=" <body: Expr> => Decl { name, args, body };
 
 pub Expr: Expr = {
+	"if" <c: Expr> "then" <t: Expr> "else" <e: Expr> =>
+		Expr::If(Box::new(c), Box::new(t), Box::new(e)),
     <l: Expr2> "::" <r: Expr> => Expr::Op(Op::Cons, Box::new(l), Box::new(r)),
     Expr2,
 };
@@ -62,6 +64,8 @@ Pattern2: Pattern<()> = {
 
 Literal: Literal = {
     "[" "]" => Literal::Nil,
+	"false" => Literal::False,
+	"true" => Literal::True,
     <s: r"[0-9]+"> => Literal::Int(s.parse().unwrap()),
 };
 

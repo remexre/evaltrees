@@ -63,6 +63,9 @@ impl<'a> TypeDisplay<'a> {
         }
 
         match *expr {
+            Type::Bool => {
+                write!(fmt, "bool")?;
+            }
             Type::Forall(_) => unreachable!(),
             Type::Func(ref l, ref r) => {
                 if prec > 0 {
