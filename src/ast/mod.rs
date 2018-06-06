@@ -3,7 +3,7 @@
 mod convert;
 mod display;
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
 use symbol::Symbol;
 
@@ -84,6 +84,28 @@ impl<Aux> Pattern<Aux> {
                 l.freevars().into_iter().chain(r.freevars()).collect()
             }
             Pattern::Literal(_, _) => BTreeSet::new(),
+        }
+    }
+}
+
+impl<Aux: Clone> Pattern<Aux> {
+    /// Returns the bindings from the match between the pattern and the expression, if possible.
+    /// Returns `None` if the pattern and expression do not unify. Will probably return `None` if
+    /// the expression is not in normal form.
+    pub fn matches(&self, expr: &Expr<Aux>) -> Option<BTreeMap<Symbol, Expr<Aux>>> {
+        match (self, expr) {
+            (&Pattern::Binding(var, _), e) => {
+                let mut map = BTreeMap::new();
+                map.insert(var, e.clone());
+                Some(map)
+            }
+            (&Pattern::Cons(ref pl, ref pr, _), &Expr::Op(Op::Cons, ref el, ref er, _)) => {
+                let mut lm = pl.matches(el)?;
+                lm.extend(pr.matches(er)?);
+                Some(lm)
+            }
+            (&Pattern::Literal(l1, _), &Expr::Literal(l2, _)) if l1 == l2 => Some(BTreeMap::new()),
+            _ => None,
         }
     }
 }

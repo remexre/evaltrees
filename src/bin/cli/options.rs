@@ -1,5 +1,9 @@
 use std::path::PathBuf;
 
+use evaltrees::ast::Decl;
+use evaltrees::eval::{CallByValue, Evaluator};
+use failure::Error;
+
 #[derive(Debug, StructOpt)]
 #[structopt(raw(setting = "::structopt::clap::AppSettings::ColoredHelp"))]
 pub struct Options {
@@ -21,6 +25,14 @@ pub struct Options {
 }
 
 impl Options {
+    /// Creates an evaluator for the given declarations as set by the flags.
+    pub fn make_evaluator<Aux: 'static + Clone>(
+        &self,
+        decls: Vec<Decl<Aux>>,
+    ) -> Result<Box<Evaluator<Aux>>, Error> {
+        Ok(Box::new(CallByValue::new(decls)))
+    }
+
     /// Sets up logging as specified by the `-q` and `-v` flags.
     pub fn start_logger(&self) {
         if !self.quiet {

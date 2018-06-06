@@ -39,6 +39,29 @@ pub fn check_args<Aux>(args: &[Pattern<Aux>]) -> Result<(), Symbol> {
     Ok(())
 }
 
+impl<Aux> Decl<Aux> {
+    /// Converts the AST decl back to a CST decl.
+    pub fn to_cst(&self) -> CstDecl {
+        fn remove_aux_from_pattern<Aux>(pat: &Pattern<Aux>) -> Pattern<()> {
+            match *pat {
+                Pattern::Binding(var, _) => Pattern::Binding(var, ()),
+                Pattern::Cons(ref l, ref r, _) => Pattern::Cons(
+                    Box::new(remove_aux_from_pattern(l)),
+                    Box::new(remove_aux_from_pattern(r)),
+                    (),
+                ),
+                Pattern::Literal(lit, _) => Pattern::Literal(lit, ()),
+            }
+        }
+
+        CstDecl {
+            name: self.name,
+            args: self.args.iter().map(remove_aux_from_pattern).collect(),
+            body: self.body.to_cst(),
+        }
+    }
+}
+
 impl CstDecl {
     /// Converts a CST decl to an AST decl.
     pub fn into_ast(self) -> Result<Decl<()>, ASTConversionError> {
@@ -49,6 +72,24 @@ impl CstDecl {
             body: self.body.into_ast()?,
             aux: (),
         })
+    }
+}
+
+impl<Aux> Expr<Aux> {
+    /// Converts the AST expression back to a CST expression.
+    pub fn to_cst(&self) -> CstExpr {
+        match *self {
+            Expr::If(ref c, ref t, ref e, _) => CstExpr::If(
+                Box::new(c.to_cst()),
+                Box::new(t.to_cst()),
+                Box::new(e.to_cst()),
+            ),
+            Expr::Literal(l, _) => CstExpr::Literal(l),
+            Expr::Op(op, ref l, ref r, _) => {
+                CstExpr::Op(op, Box::new(l.to_cst()), Box::new(r.to_cst()))
+            }
+            Expr::Variable(var, _) => CstExpr::Variable(var),
+        }
     }
 }
 

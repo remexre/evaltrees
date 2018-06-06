@@ -1,17 +1,29 @@
-use evaltrees::ast::{Decl, Expr, Type};
+use evaltrees::ast::{Decl, Type};
 use failure::Error;
 use symbol::Symbol;
 
-pub fn run(mut decls: Vec<Decl<Type>>) -> Result<(), Error> {
+use options::Options;
+
+pub fn run(mut decls: Vec<Decl<Type>>, options: &Options) -> Result<(), Error> {
     decls.sort_by_key(|decl| decl.name);
 
-    // Yeah, this is a hack...
-    let mut expr_ty = None;
+    print_decls(&decls);
+
+    let mut evaluator = options.make_evaluator(decls)?;
+    println!("{}", evaluator);
+    while !evaluator.normal_form() {
+        evaluator.step()?;
+        println!("{}", evaluator);
+    }
+    Ok(())
+}
+
+// Yeah, this is a hack...
+fn print_decls(decls: &[Decl<Type>]) {
     let mut first = true;
     let mut last_name: Symbol = "".into();
     for decl in decls {
         if decl.name.as_str() == "" {
-            expr_ty = Some(decl.aux);
             continue;
         }
         if decl.name != last_name {
@@ -26,8 +38,4 @@ pub fn run(mut decls: Vec<Decl<Type>>) -> Result<(), Error> {
         }
         println!("{};;", decl);
     }
-
-    let expr = Expr::Variable("".into(), expr_ty.unwrap());
-    println!("\nexpr : {}\n", expr.aux_ref());
-    unimplemented!()
 }

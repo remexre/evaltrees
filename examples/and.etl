@@ -1,0 +1,10 @@
+and l r = if l then r else false;;
+
+foldl f x [] = x;;
+foldl f x (h::t) = foldl f (f x h) t;;
+
+foldr f [] x = x;;
+foldr f (h::t) x = f h (foldr f t x);;
+
+andl l = foldl and true l;;
+andr l = foldr and l true;;

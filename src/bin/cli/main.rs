@@ -54,7 +54,7 @@ fn main() {
 
 fn run(options: Options) -> Result<(), Error> {
     // Load the CST of the declarations, if appropriate.
-    let decls = match options.decls_path {
+    let decls = match options.decls_path.as_ref() {
         Some(decls_path) => {
             let mut f = File::open(decls_path)?;
             let mut src = String::new();
@@ -74,7 +74,7 @@ fn run(options: Options) -> Result<(), Error> {
     let decls = typeck_decls(decls, Vec::new())?;
 
     // Actually run the thing.
-    if let Some(expr) = options.expr {
+    if let Some(expr) = options.expr.as_ref() {
         let expr = expr.parse::<CstExpr>()?.into_ast()?;
         let expr_decl = Decl {
             name: "".into(),
@@ -83,7 +83,7 @@ fn run(options: Options) -> Result<(), Error> {
             aux: (),
         };
         let decls = typeck_decls(vec![expr_decl], decls)?;
-        plain::run(decls)
+        plain::run(decls, &options)
     } else {
         repl::run(decls)
     }
