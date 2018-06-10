@@ -15,3 +15,5 @@ cache: cargo
 
 script:
 - cargo test
+# Ignored unless the right platform is detected
+- .travis/make_wasm.sh

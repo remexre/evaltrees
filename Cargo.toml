@@ -1,3 +1,10 @@
+[workspace]
+members = [
+	".",
+	"evaltrees-cli",
+	"evaltrees-wasm",
+]
+
 [package]
 authors = ["Nathan Ringo <remexre@gmail.com>"]
 description = "A simple term-rewriting interpreter that displays intermediate expressions."
@@ -9,20 +16,12 @@ version = "0.0.1"
 display_attr = "0.1.1"
 either = "1.5.0"
 failure = "0.1.1"
-human-panic = "1.0.0"
 lalrpop-util = "0.15.2"
 lazy_static = "1.0.1"
-linefeed = "0.5.0"
 linked_hash_set = "0.1.2"
 log = "0.4.1"
 regex = "1.0.0"
-stderrlog = "0.4.0"
-structopt = "0.2.8"
 symbol = "0.1.1"
 
 [build-dependencies]
 lalrpop = "0.15.2"
-
-[[bin]]
-name = "evaltrees"
-path = "src/bin/cli/main.rs"

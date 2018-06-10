@@ -1,0 +1,16 @@
+[package]
+authors = ["Nathan Ringo <remexre@gmail.com>"]
+description = "The command-line front-end to evaltrees."
+license = "Apache-2.0/MIT"
+name = "evaltrees-cli"
+version = "0.0.1"
+
+[dependencies]
+evaltrees = { path = ".." }
+failure = "0.1.1"
+human-panic = "1.0.0"
+linefeed = "0.5.0"
+log = "0.4.2"
+stderrlog = "0.4.0"
+structopt = "0.2.8"
+symbol = "0.1.1"

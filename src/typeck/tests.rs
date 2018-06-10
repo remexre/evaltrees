@@ -1,5 +1,5 @@
 use ast::{Decl, Expr, Literal, Op, Pattern, Type};
-use typeck::typeck_decls;
+use typeck::typeck;
 
 #[test]
 fn map_map() {
@@ -68,7 +68,7 @@ fn map_map() {
         )),
     )))));
 
-    let decls = typeck_decls(decls, Vec::new()).unwrap();
+    let decls = typeck(decls, Vec::new()).unwrap();
     assert_eq!(
         decls.into_iter().map(|decl| decl.aux).collect::<Vec<_>>(),
         vec![
@@ -126,7 +126,7 @@ fn poly_id() {
         },
     ];
 
-    let decls = typeck_decls(decls, Vec::new()).unwrap();
+    let decls = typeck(decls, Vec::new()).unwrap();
     assert_eq!(
         decls.into_iter().map(|decl| decl.aux).collect::<Vec<_>>(),
         vec![
