@@ -59,8 +59,22 @@ fn type_list_precedence() {
     // List (forall a. a)
     let ty4 = Type::List(Box::new(Type::Forall(Box::new(Type::Var(0)))));
 
+    // forall a. (->) (List a) (List a)
+    let ty5 = Type::Forall(Box::new(Type::Func(
+        Box::new(Type::List(Box::new(Type::Var(0)))),
+        Box::new(Type::List(Box::new(Type::Var(0)))),
+    )));
+
+    // forall a. List ((->) (List a) a)
+    let ty6 = Type::Forall(Box::new(Type::List(Box::new(Type::Func(
+        Box::new(Type::List(Box::new(Type::Var(0)))),
+        Box::new(Type::Var(0)),
+    )))));
+
     assert_eq!(ty1.to_string(), "int -> int list");
     assert_eq!(ty2.to_string(), "(int -> int) list");
     assert_eq!(ty3.to_string(), "'a. 'a list");
     assert_eq!(ty4.to_string(), "('a. 'a) list");
+    assert_eq!(ty5.to_string(), "'a. 'a list -> 'a list");
+    assert_eq!(ty6.to_string(), "'a. ('a list -> 'a) list");
 }
