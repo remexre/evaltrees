@@ -1,6 +1,7 @@
 .*
 !.babelrc
 !.gitignore
+!.travis/
 !.travis.yml
 
 dist/

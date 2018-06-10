@@ -15,9 +15,7 @@ cache: cargo
 
 script: cargo test --all
 
-before_deploy:
-- cargo build --release
-- $TRAVIS_BUILD_DIR/.travis/make_wasm.sh
+before_deploy: $TRAVIS_BUILD_DIR/.travis/before_deploy.sh
 deploy:
 - provider: pages
   github-token: $GITHUB_TOKEN
