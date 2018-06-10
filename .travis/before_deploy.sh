@@ -9,7 +9,7 @@ loudly() {
 	$@
 }
 
-if [[ -z "${TRAVIS_TAG+x}" ]]; then
+if [[ -n "${TRAVIS_TAG+x}" ]]; then
 	loudly build --release
 fi
 
