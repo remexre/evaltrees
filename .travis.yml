@@ -13,7 +13,15 @@ matrix:
   fast_finish: true
 cache: cargo
 
-script:
-- cargo test
-# Ignored unless the right platform is detected
-- .travis/make_wasm.sh
+script: cargo test --all
+
+before_deploy:
+- cargo build --release
+- $TRAVIS_BUILD_DIR/.travis/make_wasm.sh
+deploy:
+- provider: releases
+  api_key: $GITHUB_TOKEN
+  file: target/release/evaltrees
+  skip_cleanup: true
+  on:
+    tags: true
