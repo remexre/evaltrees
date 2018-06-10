@@ -14,11 +14,7 @@ impl Decl<Ty> {
         }
         self.body.collect_vars(&mut vars);
 
-        // https://github.com/alexheretic/linked-hash-set/issues/4 would let this be implemented
-        // more efficiently.
-        let mut env = vars.into_iter().collect::<Vec<_>>();
-        env.reverse();
-
+        let env = vars.into_iter().rev().collect::<Vec<_>>();
         let mut ty = self.aux.reify_in(&env);
         for _ in &env {
             ty = Type::Forall(Box::new(ty));
