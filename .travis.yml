@@ -13,6 +13,7 @@ matrix:
   fast_finish: true
 cache: cargo
 
+before_install: $TRAVIS_BUILD_DIR/.travis/before_install.sh
 script: cargo test --all
 
 before_deploy: $TRAVIS_BUILD_DIR/.travis/before_deploy.sh
