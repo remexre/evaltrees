@@ -3,6 +3,9 @@ import debounce from "debounce";
 import { Terminal } from "xterm";
 import { fit } from "xterm/lib/addons/fit/fit";
 
+import "../node_modules/xterm/dist/xterm.css";
+import "./index.css";
+
 const term = new Terminal();
 term.open(document.getElementById("terminal"));
 fit(term);
