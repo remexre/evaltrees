@@ -223,13 +223,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "evaltrees-wasm"
-version = "0.0.1"
-dependencies = [
- "evaltrees 0.0.1",
-]
-
-[[package]]
 name = "failure"
 version = "0.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"

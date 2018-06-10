@@ -2,7 +2,6 @@
 members = [
 	".",
 	"evaltrees-cli",
-	"evaltrees-wasm",
 ]
 
 [package]

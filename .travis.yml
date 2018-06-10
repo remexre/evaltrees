@@ -19,9 +19,17 @@ before_deploy:
 - cargo build --release
 - $TRAVIS_BUILD_DIR/.travis/make_wasm.sh
 deploy:
+- provider: pages
+  github-token: $GITHUB_TOKEN
+  local-dir: evaltrees-wasm/dist
+  on:
+    branch: master
+    condition: $TRAVIS_OS_NAME = linux && $TRAVIS_RUST_VERSION = nightly
+  skip-cleanup: true
 - provider: releases
   api_key: $GITHUB_TOKEN
   file: target/release/evaltrees
-  skip_cleanup: true
   on:
+    condition: $TRAVIS_RUST_VERSION = stable
     tags: true
+  skip_cleanup: true
