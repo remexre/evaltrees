@@ -21,7 +21,7 @@ use std::process::exit;
 
 use evaltrees::ast::Decl;
 use evaltrees::cst::{parse_decls, Expr as CstExpr};
-use evaltrees::typeck::typeck_decls;
+use evaltrees::typeck::typeck;
 use failure::Error;
 use structopt::StructOpt;
 
@@ -71,7 +71,7 @@ fn run(options: Options) -> Result<(), Error> {
         .collect::<Result<Vec<_>, _>>()?;
 
     // Type-check the AST.
-    let decls = typeck_decls(decls, Vec::new())?;
+    let decls = typeck(decls, Vec::new())?;
 
     // Actually run the thing.
     if let Some(expr) = options.expr.as_ref() {
@@ -82,7 +82,7 @@ fn run(options: Options) -> Result<(), Error> {
             body: expr,
             aux: (),
         };
-        let decls = typeck_decls(vec![expr_decl], decls)?;
+        let decls = typeck(vec![expr_decl], decls)?;
         plain::run(decls, &options)
     } else {
         repl::run(decls)

@@ -18,7 +18,6 @@ pub fn run(mut decls: Vec<Decl<Type>>, options: &Options) -> Result<(), Error> {
     Ok(())
 }
 
-// Yeah, this is a hack...
 fn print_decls(decls: &[Decl<Type>]) {
     let mut first = true;
     let mut last_name: Symbol = "".into();

@@ -20,8 +20,10 @@ See `doc/syntax.md` for a description of the language's syntax.
  - Mutual Recursion
    - Currently, this breaks typechecking
  - Polymorphic Recursion
+   - This makes type inference undecidable
  - Higher-rank Polymorphism
    - The reification procedure for types assumes rank-1 polymorphism
+   - This makes type inference undecidable
 
 ## License
 

@@ -43,7 +43,7 @@ pub enum TypeError {
 }
 
 /// Completely type-checks a series of declarations.
-pub fn typeck_decls(
+pub fn typeck(
     decls: Vec<Decl<()>>,
     mut checked: Vec<Decl<Type>>,
 ) -> Result<Vec<Decl<Type>>, TypeError> {
