@@ -10,6 +10,7 @@ use lalrpop_util::ParseError;
 
 use cst::parser::grammar::Token;
 use cst::{Decl, Expr};
+use repl::ReplCommand;
 
 impl FromStr for Decl {
     type Err = ParseError<usize, String, &'static str>;
@@ -34,4 +35,13 @@ pub fn parse_decls(src: &str) -> Result<Vec<Decl>, ParseError<usize, String, &'s
     grammar::DeclsParser::new()
         .parse(src)
         .map_err(|e| e.map_token(|Token(_, s)| s.to_string()))
+}
+
+impl FromStr for ReplCommand {
+    type Err = ParseError<usize, String, &'static str>;
+    fn from_str(s: &str) -> Result<ReplCommand, ParseError<usize, String, &'static str>> {
+        grammar::ReplCommandParser::new()
+            .parse(s)
+            .map_err(|e| e.map_token(|Token(_, s)| s.to_string()))
+    }
 }

@@ -2,8 +2,19 @@ use symbol::Symbol;
 
 use ast::{Literal, Op, Pattern};
 use cst::{Decl, Expr};
+use repl::ReplCommand;
 
 grammar;
+
+pub ReplCommand: ReplCommand = {
+	<e: Expr> => ReplCommand::Expr(e),
+	":decl" <d: Decl> ";;"? => ReplCommand::Decl(d),
+	":help" => ReplCommand::Help,
+	":q" => ReplCommand::Quit,
+	":quit" => ReplCommand::Quit,
+	":reset" => ReplCommand::Reset,
+	":t" <n: Name> => ReplCommand::Typeof(n),
+};
 
 pub Decls = DeclSemicolons*;
 

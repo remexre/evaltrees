@@ -40,6 +40,16 @@ impl<Aux> Decl<Aux> {
         vars.remove(&self.name);
         vars
     }
+
+    /// Modifies the aux value, recursively.
+    pub fn map_aux<Aux2, F: Copy + Fn(Aux) -> Aux2>(self, f: F) -> Decl<Aux2> {
+        Decl {
+            name: self.name,
+            args: self.args.into_iter().map(|arg| arg.map_aux(f)).collect(),
+            body: self.body.map_aux(f),
+            aux: f(self.aux),
+        }
+    }
 }
 
 impl<Aux: Clone> Decl<Aux> {
@@ -84,6 +94,17 @@ impl<Aux> Pattern<Aux> {
                 l.freevars().into_iter().chain(r.freevars()).collect()
             }
             Pattern::Literal(_, _) => BTreeSet::new(),
+        }
+    }
+
+    /// Modifies the aux value, recursively.
+    pub fn map_aux<Aux2, F: Copy + Fn(Aux) -> Aux2>(self, f: F) -> Pattern<Aux2> {
+        match self {
+            Pattern::Binding(var, aux) => Pattern::Binding(var, f(aux)),
+            Pattern::Cons(l, r, aux) => {
+                Pattern::Cons(Box::new(l.map_aux(f)), Box::new(r.map_aux(f)), f(aux))
+            }
+            Pattern::Literal(lit, aux) => Pattern::Literal(lit, f(aux)),
         }
     }
 }
@@ -163,6 +184,23 @@ impl<Aux> Expr<Aux> {
                 set.insert(var);
                 set
             }
+        }
+    }
+
+    /// Modifies the aux value, recursively.
+    pub fn map_aux<Aux2, F: Copy + Fn(Aux) -> Aux2>(self, f: F) -> Expr<Aux2> {
+        match self {
+            Expr::If(c, t, e, aux) => Expr::If(
+                Box::new(c.map_aux(f)),
+                Box::new(t.map_aux(f)),
+                Box::new(e.map_aux(f)),
+                f(aux),
+            ),
+            Expr::Literal(lit, aux) => Expr::Literal(lit, f(aux)),
+            Expr::Op(op, l, r, aux) => {
+                Expr::Op(op, Box::new(l.map_aux(f)), Box::new(r.map_aux(f)), f(aux))
+            }
+            Expr::Variable(var, aux) => Expr::Variable(var, f(aux)),
         }
     }
 }

@@ -1,5 +1,6 @@
-use ast::{Literal, Op};
-use cst::Expr;
+use ast::{Literal, Op, Pattern};
+use cst::{Decl, Expr};
+use repl::ReplCommand;
 
 #[test]
 fn calls() {
@@ -16,6 +17,23 @@ fn calls() {
             Box::new(Expr::Variable("y".into())),
         )
     )
+}
+
+#[test]
+fn commands() {
+    assert_eq!(
+        ":decl id x = x".parse::<ReplCommand>().unwrap(),
+        ReplCommand::Decl(Decl {
+            name: "id".into(),
+            args: vec![Pattern::Binding("x".into(), ())],
+            body: Expr::Variable("x".into()),
+        })
+    );
+    assert_eq!(
+        ":t id".parse::<ReplCommand>().unwrap(),
+        ReplCommand::Typeof("id".into()),
+    );
+    assert_eq!(":q".parse::<ReplCommand>().unwrap(), ReplCommand::Quit,);
 }
 
 #[test]

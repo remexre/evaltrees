@@ -1,8 +1,9 @@
 use std::io::Error as IoError;
+use std::mem::replace;
 
 use evaltrees::ast::{Decl, Type};
-use evaltrees::cst::Expr as CstExpr;
 use evaltrees::eval::{CallByValue, Evaluator};
+use evaltrees::repl::ReplCommand;
 use evaltrees::typeck::typeck;
 use failure::Error;
 use linefeed::{reader::ReadResult, Interface, Terminal};
@@ -17,8 +18,12 @@ pub fn run(mut decls: Vec<Decl<Type>>) -> Result<(), Error> {
             ReadResult::Input(line) => line,
             _ => break Ok(()),
         };
-        if let Err(err) = repl_one(&reader, line, &mut decls) {
-            error!("{}", err);
+        match repl_one(&reader, line, &mut decls) {
+            Ok(true) => {}
+            Ok(false) => break Ok(()),
+            Err(err) => {
+                error!("{}", err);
+            }
         }
     }
 }
@@ -27,28 +32,61 @@ fn repl_one<T: Terminal>(
     iface: &Interface<T>,
     line: String,
     decls: &mut Vec<Decl<Type>>,
-) -> Result<(), Error> {
-    let expr: CstExpr = line.parse()?;
-    let decls = typeck(
-        vec![Decl {
-            name: "".into(),
-            args: vec![],
-            body: expr.into_ast()?,
-            aux: (),
-        }],
-        decls.clone(),
-    )?;
+) -> Result<bool, Error> {
+    let cmd = line.parse()?;
+    info!("Running command {:?}", cmd);
+    match cmd {
+        ReplCommand::Decl(decl) => {
+            let decl = decl.into_ast()?;
+            let (diff_name, mut same_name) = split_vec(
+                decls.clone(),
+                |d| d.name == decl.name,
+                |d| d.map_aux(|_ty| ()),
+            );
+            same_name.push(decl);
+            replace(decls, typeck(same_name, diff_name)?);
+            Ok(true)
+        }
+        ReplCommand::Expr(expr) => {
+            let decls = typeck(
+                vec![Decl {
+                    name: "".into(),
+                    args: vec![],
+                    body: expr.into_ast()?,
+                    aux: (),
+                }],
+                decls.clone(),
+            )?;
 
-    let mut evaluator = CallByValue::new(decls);
-    loop {
-        writeln!(iface, "{}", evaluator)?;
-        if !evaluator.normal_form() {
-            evaluator.step()?;
-        } else {
-            break;
+            let mut evaluator = CallByValue::new(decls);
+            loop {
+                writeln!(iface, "{}", evaluator)?;
+                if !evaluator.normal_form() {
+                    evaluator.step()?;
+                } else {
+                    break Ok(true);
+                }
+            }
+        }
+        ReplCommand::Help => {
+            writeln!(iface, "{}", ReplCommand::help())?;
+            Ok(true)
+        }
+        ReplCommand::Quit => Ok(false),
+        ReplCommand::Reset => {
+            decls.clear();
+            Ok(true)
+        }
+        ReplCommand::Typeof(name) => {
+            let ty = decls
+                .iter()
+                .find(|decl| decl.name == name)
+                .map(|decl| &decl.aux)
+                .ok_or_else(|| format_err!("Unknown variable {}", name))?;
+            writeln!(iface, "{}", ty)?;
+            Ok(true)
         }
     }
-    Ok(())
 }
 
 fn print_decls<T: Terminal>(iface: &Interface<T>, decls: &[Decl<Type>]) -> Result<(), IoError> {
@@ -71,4 +109,23 @@ fn print_decls<T: Terminal>(iface: &Interface<T>, decls: &[Decl<Type>]) -> Resul
         writeln!(iface, "{};;", decl)?;
     }
     Ok(())
+}
+
+// TODO: https://github.com/rust-lang/rust/issues/43244
+fn split_vec<F, F2, T, T2>(mut vec: Vec<T>, mut is_right: F, mut transform: F2) -> (Vec<T>, Vec<T2>)
+where
+    F: FnMut(&mut T) -> bool,
+    F2: FnMut(T) -> T2,
+{
+    let mut i = 0;
+    let mut right = Vec::new();
+    while i != vec.len() {
+        if is_right(&mut vec[i]) {
+            let val = vec.remove(i);
+            right.push(transform(val));
+        } else {
+            i += 1;
+        }
+    }
+    (vec, right)
 }

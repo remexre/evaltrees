@@ -18,4 +18,5 @@ extern crate symbol;
 pub mod ast;
 pub mod cst;
 pub mod eval;
+pub mod repl;
 pub mod typeck;
