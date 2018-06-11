@@ -9,30 +9,31 @@ use failure::Error;
 use linefeed::{reader::ReadResult, Interface, Terminal};
 use symbol::Symbol;
 
-pub fn run(mut decls: Vec<Decl<Type>>, print_style: PrintStyle) -> Result<(), Error> {
-    let reader = Interface::new("evaltrees")?;
-    reader.set_prompt("> ");
-    print_decls(&reader, &decls, print_style)?;
+pub fn run(mut decls: Vec<Decl<Type>>, mut print_style: PrintStyle) -> Result<(), Error> {
+    let iface = Interface::new("evaltrees")?;
+    iface.set_prompt("> ");
+    print_decls(&iface, &decls, print_style)?;
     loop {
-        let line = match reader.read_line()? {
+        let line = match iface.read_line()? {
             ReadResult::Input(line) => line,
             _ => break Ok(()),
         };
-        match repl_one(&reader, line, &mut decls, print_style) {
+        match repl_one(&iface, &line, &mut decls, &mut print_style) {
             Ok(true) => {}
             Ok(false) => break Ok(()),
             Err(err) => {
                 error!("{}", err);
             }
         }
+        iface.add_history_unique(line);
     }
 }
 
 fn repl_one<T: Terminal>(
     iface: &Interface<T>,
-    line: String,
+    line: &str,
     decls: &mut Vec<Decl<Type>>,
-    print_style: PrintStyle,
+    print_style: &mut PrintStyle,
 ) -> Result<bool, Error> {
     let cmd = line.parse()?;
     info!("Running command {:?}", cmd);
@@ -60,7 +61,7 @@ fn repl_one<T: Terminal>(
             )?;
 
             let mut evaluator = CallByValue::new(decls);
-            evaluator.set_print_style(print_style);
+            evaluator.set_print_style(*print_style);
             loop {
                 writeln!(iface, "{}", evaluator)?;
                 if !evaluator.normal_form() {
@@ -72,6 +73,10 @@ fn repl_one<T: Terminal>(
         }
         ReplCommand::Help => {
             writeln!(iface, "{}", ReplCommand::help())?;
+            Ok(true)
+        }
+        ReplCommand::PrintStyle(sty) => {
+            *print_style = sty;
             Ok(true)
         }
         ReplCommand::Quit => Ok(false),

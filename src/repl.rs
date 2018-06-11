@@ -2,6 +2,7 @@
 
 use symbol::Symbol;
 
+use ast::PrintStyle;
 use cst::{Decl, Expr};
 
 /// A command entered at the REPL.
@@ -15,6 +16,9 @@ pub enum ReplCommand {
 
     /// Prints a help menu.
     Help,
+
+    /// Changes the print style.
+    PrintStyle(PrintStyle),
 
     /// Quits the REPL.
     Quit,
