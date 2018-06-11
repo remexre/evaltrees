@@ -1,15 +1,16 @@
 use failure::Error;
 
-use ast::{Decl, Expr, Literal, Op};
+use ast::{Decl, Expr, Literal, Op, PrintStyle};
 use eval::util::{apply, beta_number, reducible};
 use eval::Evaluator;
 
 /// Call-by-value evaluation.
 #[derive(Debug, DisplayAttr)]
-#[display(fmt = "{}", arg = "expr.as_ref().unwrap()")]
+#[display(fmt = "{}", arg = "expr.as_ref().unwrap().display_as(*print_style)")]
 pub struct CallByValue<Aux> {
     decls: Vec<Decl<Aux>>,
     expr: Option<Expr<Aux>>,
+    print_style: PrintStyle,
 }
 
 impl<Aux: Clone> CallByValue<Aux> {
@@ -26,6 +27,7 @@ impl<Aux: Clone> CallByValue<Aux> {
         CallByValue {
             decls,
             expr: Some(expr),
+            print_style: PrintStyle::AST,
         }
     }
 }
@@ -33,6 +35,10 @@ impl<Aux: Clone> CallByValue<Aux> {
 impl<Aux: Clone> Evaluator<Aux> for CallByValue<Aux> {
     fn normal_form(&self) -> bool {
         !reducible(self.expr.as_ref().unwrap(), &self.decls)
+    }
+
+    fn set_print_style(&mut self, print_style: PrintStyle) {
+        self.print_style = print_style;
     }
 
     fn step(&mut self) -> Result<(), Error> {

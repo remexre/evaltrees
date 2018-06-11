@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use evaltrees::ast::Decl;
+use evaltrees::ast::{Decl, PrintStyle};
 use evaltrees::eval::{CallByValue, Evaluator};
 use failure::Error;
 
@@ -22,6 +22,10 @@ pub struct Options {
     /// The expression to evaluate. If not present, a REPL will be started.
     #[structopt(short = "e", long = "expr", name = "EXPR")]
     pub expr: Option<String>,
+
+    /// Sets the print style to ASTs.
+    #[structopt(long = "print-ast")]
+    pub print_ast: bool,
 }
 
 impl Options {
@@ -31,6 +35,15 @@ impl Options {
         decls: Vec<Decl<Aux>>,
     ) -> Result<Box<Evaluator<Aux>>, Error> {
         Ok(Box::new(CallByValue::new(decls)))
+    }
+
+    /// Gets the print style specified by the flags.
+    pub fn print_style(&self) -> PrintStyle {
+        if self.print_ast {
+            PrintStyle::AST
+        } else {
+            PrintStyle::CST
+        }
     }
 
     /// Sets up logging as specified by the `-q` and `-v` flags.

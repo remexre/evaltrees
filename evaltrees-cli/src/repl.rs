@@ -1,7 +1,7 @@
 use std::io::Error as IoError;
 use std::mem::replace;
 
-use evaltrees::ast::{Decl, Type};
+use evaltrees::ast::{Decl, PrintStyle, Type};
 use evaltrees::eval::{CallByValue, Evaluator};
 use evaltrees::repl::ReplCommand;
 use evaltrees::typeck::typeck;
@@ -9,16 +9,16 @@ use failure::Error;
 use linefeed::{reader::ReadResult, Interface, Terminal};
 use symbol::Symbol;
 
-pub fn run(mut decls: Vec<Decl<Type>>) -> Result<(), Error> {
+pub fn run(mut decls: Vec<Decl<Type>>, print_style: PrintStyle) -> Result<(), Error> {
     let reader = Interface::new("evaltrees")?;
     reader.set_prompt("> ");
-    print_decls(&reader, &decls)?;
+    print_decls(&reader, &decls, print_style)?;
     loop {
         let line = match reader.read_line()? {
             ReadResult::Input(line) => line,
             _ => break Ok(()),
         };
-        match repl_one(&reader, line, &mut decls) {
+        match repl_one(&reader, line, &mut decls, print_style) {
             Ok(true) => {}
             Ok(false) => break Ok(()),
             Err(err) => {
@@ -32,6 +32,7 @@ fn repl_one<T: Terminal>(
     iface: &Interface<T>,
     line: String,
     decls: &mut Vec<Decl<Type>>,
+    print_style: PrintStyle,
 ) -> Result<bool, Error> {
     let cmd = line.parse()?;
     info!("Running command {:?}", cmd);
@@ -59,6 +60,7 @@ fn repl_one<T: Terminal>(
             )?;
 
             let mut evaluator = CallByValue::new(decls);
+            evaluator.set_print_style(print_style);
             loop {
                 writeln!(iface, "{}", evaluator)?;
                 if !evaluator.normal_form() {
@@ -89,7 +91,11 @@ fn repl_one<T: Terminal>(
     }
 }
 
-fn print_decls<T: Terminal>(iface: &Interface<T>, decls: &[Decl<Type>]) -> Result<(), IoError> {
+fn print_decls<T: Terminal>(
+    iface: &Interface<T>,
+    decls: &[Decl<Type>],
+    print_style: PrintStyle,
+) -> Result<(), IoError> {
     let mut first = true;
     let mut last_name: Symbol = "".into();
     for decl in decls {
@@ -106,7 +112,7 @@ fn print_decls<T: Terminal>(iface: &Interface<T>, decls: &[Decl<Type>]) -> Resul
             writeln!(iface, "{} : {}", decl.name, decl.aux)?;
             last_name = decl.name;
         }
-        writeln!(iface, "{};;", decl)?;
+        writeln!(iface, "{};;", decl.display_as(print_style))?;
     }
     Ok(())
 }

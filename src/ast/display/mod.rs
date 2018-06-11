@@ -10,10 +10,16 @@ use ast::Decl;
 
 impl<Aux> Display for Decl<Aux> {
     fn fmt(&self, fmt: &mut Formatter) -> FmtResult {
-        write!(fmt, "{}", self.name)?;
+        write!(fmt, "Decl({}, [", self.name)?;
+        let mut first = true;
         for arg in &self.args {
-            write!(fmt, " {}", arg)?;
+            if first {
+                first = false;
+            } else {
+                write!(fmt, ", ")?;
+            }
+            write!(fmt, "{}", arg)?;
         }
-        write!(fmt, " = {}", self.body)
+        write!(fmt, "], {})", self.body)
     }
 }

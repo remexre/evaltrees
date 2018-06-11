@@ -2,10 +2,13 @@
 
 mod convert;
 mod display;
+mod print;
 
 use std::collections::{BTreeMap, BTreeSet};
 
 use symbol::Symbol;
+
+pub use ast::print::PrintStyle;
 
 /// A function or value declaration.
 #[derive(Clone, Debug, PartialEq)]
