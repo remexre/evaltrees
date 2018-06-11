@@ -7,7 +7,7 @@ use repl::ReplCommand;
 grammar;
 
 pub ReplCommand: ReplCommand = {
-	<e: Expr> => ReplCommand::Expr(e),
+	<e: Expr> ";;"? => ReplCommand::Expr(e),
 	":decl" <d: Decl> ";;"? => ReplCommand::Decl(d),
 	":help" => ReplCommand::Help,
 	":q" => ReplCommand::Quit,

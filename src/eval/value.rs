@@ -51,20 +51,28 @@ fn step<Aux: Clone>(expr: Expr<Aux>, decls: &[Decl<Aux>]) -> Result<Expr<Aux>, E
             c => Expr::If(Box::new(step(c, decls)?), t, e, aux),
         },
         Expr::Literal(l, aux) => Expr::Literal(l, aux),
-        Expr::Op(Op::App, l, r, aux) => match beta {
-            Some(n) if n > 0 => Expr::Op(Op::App, l, r, aux),
-            Some(0) => {
-                let mut args = vec![*r];
-                let mut func = *l;
-                while let Expr::Op(Op::App, f, a, _) = func {
-                    args.push(*a);
-                    func = *f;
+        Expr::Op(Op::App, l, r, aux) => {
+            if reducible(&l, decls) {
+                Expr::Op(Op::App, Box::new(step(*l, decls)?), r, aux)
+            } else if reducible(&r, decls) {
+                Expr::Op(Op::App, l, Box::new(step(*r, decls)?), aux)
+            } else {
+                match beta {
+                    Some(n) if n > 0 => Expr::Op(Op::App, l, r, aux),
+                    Some(0) => {
+                        let mut args = vec![*r];
+                        let mut func = *l;
+                        while let Expr::Op(Op::App, f, a, _) = func {
+                            args.push(*a);
+                            func = *f;
+                        }
+                        args.reverse();
+                        apply(func, args, decls)?
+                    }
+                    _ => Expr::Op(Op::App, Box::new(step(*l, decls)?), r, aux),
                 }
-                args.reverse();
-                apply(func, args, decls)?
             }
-            _ => Expr::Op(Op::App, Box::new(step(*l, decls)?), r, aux),
-        },
+        }
         Expr::Op(Op::Cons, l, r, aux) => if reducible(&l, decls) {
             Expr::Op(Op::Cons, Box::new(step(*l, decls)?), r, aux)
         } else {
@@ -106,5 +114,83 @@ fn math_op<Aux: Clone, F: Fn(usize, usize) -> Result<usize, Error>>(
         }
     } else {
         Ok(Expr::Op(op, Box::new(step(*l, decls)?), r, aux))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use ast::{Pattern, Type};
+
+    #[test]
+    fn app() {
+        let mut evaluator = CallByValue::new(vec![
+            Decl {
+                name: "f".into(),
+                args: vec![
+                    Pattern::Binding("x".into(), Type::Int),
+                    Pattern::Binding("y".into(), Type::Int),
+                ],
+                body: Expr::Op(
+                    Op::Add,
+                    Box::new(Expr::Variable("x".into(), Type::Int)),
+                    Box::new(Expr::Variable("y".into(), Type::Int)),
+                    Type::Int,
+                ),
+                aux: Type::Func(
+                    Box::new(Type::Int),
+                    Box::new(Type::Func(Box::new(Type::Int), Box::new(Type::Int))),
+                ),
+            },
+            Decl {
+                name: "".into(),
+                args: vec![],
+                body: Expr::Op(
+                    Op::App,
+                    Box::new(Expr::Op(
+                        Op::App,
+                        Box::new(Expr::Variable("f".into(), Type::Int)),
+                        Box::new(Expr::Op(
+                            Op::Add,
+                            Box::new(Expr::Literal(Literal::Int(1), Type::Int)),
+                            Box::new(Expr::Literal(Literal::Int(2), Type::Int)),
+                            Type::Int,
+                        )),
+                        Type::Int,
+                    )),
+                    Box::new(Expr::Op(
+                        Op::Add,
+                        Box::new(Expr::Literal(Literal::Int(3), Type::Int)),
+                        Box::new(Expr::Literal(Literal::Int(4), Type::Int)),
+                        Type::Int,
+                    )),
+                    Type::Int,
+                ),
+                aux: Type::Int,
+            },
+        ]);
+
+        assert!(evaluator.step().is_ok());
+        assert_eq!(
+            format!("{}", evaluator),
+            "App(App(f, Add(1, 2)), Add(3, 4))"
+        );
+        assert!(!evaluator.normal_form());
+
+        assert!(evaluator.step().is_ok());
+        assert_eq!(format!("{}", evaluator), "App(App(f, 3), Add(3, 4))");
+        assert!(!evaluator.normal_form());
+
+        assert!(evaluator.step().is_ok());
+        assert_eq!(format!("{}", evaluator), "App(App(f, 3), 7)");
+        assert!(!evaluator.normal_form());
+
+        assert!(evaluator.step().is_ok());
+        assert_eq!(format!("{}", evaluator), "Add(3, 7)");
+        assert!(!evaluator.normal_form());
+
+        assert!(evaluator.step().is_ok());
+        assert_eq!(format!("{}", evaluator), "10");
+        assert!(evaluator.normal_form());
     }
 }

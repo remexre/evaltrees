@@ -43,8 +43,8 @@ pub fn reducible<Aux>(expr: &Expr<Aux>, decls: &[Decl<Aux>]) -> bool {
 /// Note that beta numbers may be negative; for example, `id id 0` has a beta number of -1.
 pub fn beta_number<Aux>(expr: &Expr<Aux>, decls: &[Decl<Aux>]) -> Option<isize> {
     match *expr {
-        // An application has a beta number equal to the beta number of its left argument minus
-        // one.
+        // An application whose arguments are in normal form has a beta number equal to the beta
+        // number of its left argument minus one.
         Expr::Op(Op::App, ref l, _, _) => beta_number(l, decls).map(|n| n - 1),
 
         // A variable has a beta number equal to its arity.
