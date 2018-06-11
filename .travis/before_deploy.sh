@@ -8,8 +8,9 @@ loudly() {
 }
 
 if [[ -n "$TRAVIS_TAG" ]]; then
-	cd $(dirname ${BASH_SOURCE[0]})/../evaltrees-cli
+	cd $(dirname ${BASH_SOURCE[0]})/..
 	loudly cargo build --all --release
+	loudly cp target/release/evaltrees-cli evaltrees
 fi
 
 if [[ "$TRAVIS_OS_NAME" = linux && "$TRAVIS_RUST_VERSION" = nightly ]]; then

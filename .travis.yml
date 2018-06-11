@@ -27,7 +27,7 @@ deploy:
   skip-cleanup: true
 - provider: releases
   api_key: $GITHUB_TOKEN
-  file: target/release/evaltrees
+  file: evaltrees
   on:
     condition: $TRAVIS_RUST_VERSION = stable
     tags: true
