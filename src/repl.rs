@@ -1,15 +1,17 @@
 //! Utilities for implementing a REPL.
 
-use symbol::Symbol;
-
-use ast::PrintStyle;
-use cst::{Decl, Expr};
+use ast::{Decl, PrintStyle, Type};
+use cst::{Decl as CstDecl, Expr};
+use eval::Evaluator;
 
 /// A command entered at the REPL.
 #[derive(Clone, Debug, PartialEq)]
 pub enum ReplCommand {
     /// Adds a new declaration.
-    Decl(Decl),
+    Decl(CstDecl),
+
+    /// Sets the function used to construct an evaluator.
+    Evaluator(fn(Vec<Decl<Type>>) -> Box<Evaluator<Type>>),
 
     /// Evaluates an expression.
     Expr(Expr),
@@ -26,8 +28,8 @@ pub enum ReplCommand {
     /// Clears all declarations from the REPL.
     Reset,
 
-    /// Gets the type of a symbol.
-    Typeof(Symbol),
+    /// Gets the type of an expression.
+    Typeof(Expr),
 }
 
 impl ReplCommand {

@@ -1,5 +1,6 @@
 //! Evaluation and evaluators.
 
+mod name;
 pub mod util;
 mod value;
 
@@ -8,6 +9,7 @@ use std::fmt::Display;
 use failure::Error;
 
 use ast::PrintStyle;
+pub use eval::name::CallByName;
 pub use eval::value::CallByValue;
 
 // TODO: Should there be proptest/quickcheck tests for progress/preservation properties?

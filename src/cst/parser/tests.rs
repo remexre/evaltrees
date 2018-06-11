@@ -31,7 +31,7 @@ fn commands() {
     );
     assert_eq!(
         ":t id".parse::<ReplCommand>().unwrap(),
-        ReplCommand::Typeof("id".into()),
+        ReplCommand::Typeof(Expr::Variable("id".into())),
     );
     assert_eq!(":q".parse::<ReplCommand>().unwrap(), ReplCommand::Quit,);
 }

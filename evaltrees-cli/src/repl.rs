@@ -13,12 +13,20 @@ pub fn run(mut decls: Vec<Decl<Type>>, mut print_style: PrintStyle) -> Result<()
     let iface = Interface::new("evaltrees")?;
     iface.set_prompt("> ");
     print_decls(&iface, &decls, print_style)?;
+    let mut make_evaluator: fn(Vec<Decl<Type>>) -> Box<Evaluator<Type>> =
+        |decls| Box::new(CallByValue::new(decls));
     loop {
         let line = match iface.read_line()? {
             ReadResult::Input(line) => line,
             _ => break Ok(()),
         };
-        match repl_one(&iface, &line, &mut decls, &mut print_style) {
+        match repl_one(
+            &iface,
+            &line,
+            &mut decls,
+            &mut make_evaluator,
+            &mut print_style,
+        ) {
             Ok(true) => {}
             Ok(false) => break Ok(()),
             Err(err) => {
@@ -33,11 +41,10 @@ fn repl_one<T: Terminal>(
     iface: &Interface<T>,
     line: &str,
     decls: &mut Vec<Decl<Type>>,
+    make_evaluator: &mut fn(Vec<Decl<Type>>) -> Box<Evaluator<Type>>,
     print_style: &mut PrintStyle,
 ) -> Result<bool, Error> {
-    let cmd = line.parse()?;
-    info!("Running command {:?}", cmd);
-    match cmd {
+    match line.parse()? {
         ReplCommand::Decl(decl) => {
             let decl = decl.into_ast()?;
             let (diff_name, mut same_name) = split_vec(
@@ -47,6 +54,10 @@ fn repl_one<T: Terminal>(
             );
             same_name.push(decl);
             replace(decls, typeck(same_name, diff_name)?);
+            Ok(true)
+        }
+        ReplCommand::Evaluator(e) => {
+            *make_evaluator = e;
             Ok(true)
         }
         ReplCommand::Expr(expr) => {
@@ -60,12 +71,12 @@ fn repl_one<T: Terminal>(
                 decls.clone(),
             )?;
 
-            let mut evaluator = CallByValue::new(decls);
+            let mut evaluator = make_evaluator(decls);
             evaluator.set_print_style(*print_style);
             loop {
-                writeln!(iface, "{}", evaluator)?;
                 if !evaluator.normal_form() {
                     evaluator.step()?;
+                    writeln!(iface, "{}", evaluator)?;
                 } else {
                     break Ok(true);
                 }
@@ -84,13 +95,23 @@ fn repl_one<T: Terminal>(
             decls.clear();
             Ok(true)
         }
-        ReplCommand::Typeof(name) => {
-            let ty = decls
-                .iter()
-                .find(|decl| decl.name == name)
-                .map(|decl| &decl.aux)
-                .ok_or_else(|| format_err!("Unknown variable {}", name))?;
-            writeln!(iface, "{}", ty)?;
+        ReplCommand::Typeof(expr) => {
+            let decls = typeck(
+                vec![Decl {
+                    name: "".into(),
+                    args: vec![],
+                    body: expr.into_ast()?,
+                    aux: (),
+                }],
+                decls.clone(),
+            )?;
+            let decl = decls.iter().find(|decl| decl.name == "".into()).unwrap();
+            writeln!(
+                iface,
+                "{} : {}",
+                decl.body.display_as(PrintStyle::CST),
+                decl.aux
+            )?;
             Ok(true)
         }
     }

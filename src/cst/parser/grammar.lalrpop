@@ -2,6 +2,7 @@ use symbol::Symbol;
 
 use ast::{Literal, Op, Pattern, PrintStyle};
 use cst::{Decl, Expr};
+use eval::{CallByName, CallByValue};
 use repl::ReplCommand;
 
 grammar;
@@ -9,13 +10,15 @@ grammar;
 pub ReplCommand: ReplCommand = {
 	<e: Expr> ";;"? => ReplCommand::Expr(e),
 	":ast" => ReplCommand::PrintStyle(PrintStyle::AST),
+	":cbn" => ReplCommand::Evaluator(|decls| Box::new(CallByName::new(decls))),
+	":cbv" => ReplCommand::Evaluator(|decls| Box::new(CallByValue::new(decls))),
 	":cst" => ReplCommand::PrintStyle(PrintStyle::CST),
 	":decl" <d: Decl> ";;"? => ReplCommand::Decl(d),
 	":help" => ReplCommand::Help,
 	":q" => ReplCommand::Quit,
 	":quit" => ReplCommand::Quit,
 	":reset" => ReplCommand::Reset,
-	":t" <n: Name> => ReplCommand::Typeof(n),
+	":t" <e: Expr> => ReplCommand::Typeof(e),
 };
 
 pub Decls = DeclSemicolons*;

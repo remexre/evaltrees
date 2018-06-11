@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
-use evaltrees::ast::{Decl, PrintStyle};
-use evaltrees::eval::{CallByValue, Evaluator};
+use evaltrees::ast::{Decl, PrintStyle, Type};
+use evaltrees::eval::{CallByName, CallByValue, Evaluator};
 use failure::Error;
 
 #[derive(Debug, StructOpt)]
@@ -23,6 +23,10 @@ pub struct Options {
     #[structopt(short = "e", long = "expr", name = "EXPR")]
     pub expr: Option<String>,
 
+    /// The evaluator to use.
+    #[structopt(long = "evaluator", name = "EVALUATOR")]
+    pub evaluator: Option<String>,
+
     /// Sets the print style to ASTs.
     #[structopt(long = "print-ast")]
     pub print_ast: bool,
@@ -30,11 +34,15 @@ pub struct Options {
 
 impl Options {
     /// Creates an evaluator for the given declarations as set by the flags.
-    pub fn make_evaluator<Aux: 'static + Clone>(
-        &self,
-        decls: Vec<Decl<Aux>>,
-    ) -> Result<Box<Evaluator<Aux>>, Error> {
-        Ok(Box::new(CallByValue::new(decls)))
+    pub fn make_evaluator(&self) -> Result<fn(Vec<Decl<Type>>) -> Box<Evaluator<Type>>, Error> {
+        match self.evaluator.as_ref().map(|s| s as &str) {
+            Some("name") => Ok(|decls| Box::new(CallByName::new(decls))),
+            Some("value") | None => Ok(|decls| Box::new(CallByValue::new(decls))),
+            Some(e) => bail!(
+                "Unknown evaluator `{}' (valid evaluators are `name' and `value')",
+                e
+            ),
+        }
     }
 
     /// Gets the print style specified by the flags.

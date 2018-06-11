@@ -155,7 +155,13 @@ mod tests {
                     Op::App,
                     Box::new(Expr::Op(
                         Op::App,
-                        Box::new(Expr::Variable("f".into(), Type::Int)),
+                        Box::new(Expr::Variable(
+                            "f".into(),
+                            Type::Func(
+                                Box::new(Type::Int),
+                                Box::new(Type::Func(Box::new(Type::Int), Box::new(Type::Int))),
+                            ),
+                        )),
                         Box::new(Expr::Op(
                             Op::Add,
                             Box::new(Expr::Literal(Literal::Int(1), Type::Int)),
