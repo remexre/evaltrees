@@ -8,8 +8,6 @@ os:
 - linux
 - osx
 matrix:
-#  allow_failures:
-#  - rust: nightly
   fast_finish: true
 cache: cargo
 
@@ -27,7 +25,7 @@ deploy:
   skip-cleanup: true
 - provider: releases
   api_key: $GITHUB_TOKEN
-  file: evaltrees
+  file: evaltrees-${TRAVIS_OS_NAME}.tar.gz
   on:
     condition: $TRAVIS_RUST_VERSION = stable
     tags: true
