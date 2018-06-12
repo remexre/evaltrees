@@ -29,4 +29,4 @@ binop ::= '+' | '-' | '*' | '/' | 'mod' | '::'
 literal ::= '[]' | digit+
 ```
 
-The actual grammar used is [here](../../src/cst/parser/grammar.lalrpop).
+The actual grammar used is [here](../src/cst/parser/grammar.lalrpop).
