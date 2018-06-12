@@ -11,19 +11,11 @@ matrix:
   fast_finish: true
 cache: cargo
 
-before_install: $TRAVIS_BUILD_DIR/.travis/before_install.sh
 script: cargo test --all
 
 before_deploy: $TRAVIS_BUILD_DIR/.travis/before_deploy.sh
 deploy:
-- provider: pages
-  github-token: $GITHUB_TOKEN
-  local-dir: evaltrees-wasm/dist
-  on:
-    branch: master
-    condition: $TRAVIS_OS_NAME = linux && $TRAVIS_RUST_VERSION = nightly
-  skip-cleanup: true
-- provider: releases
+  provider: releases
   api_key: $GITHUB_TOKEN
   file: evaltrees-${TRAVIS_OS_NAME}.tar.gz
   on:
