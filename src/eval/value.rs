@@ -73,6 +73,10 @@ fn step<Aux: Clone>(expr: Expr<Aux>, decls: &[Decl<Aux>]) -> Result<Expr<Aux>, E
                             func = *f;
                         }
                         args.reverse();
+                        let func = match func {
+                            Expr::Variable(var, _) => var,
+                            func => panic!("Invalid callable expression: {}", func),
+                        };
                         apply(func, args, decls)?
                     }
                     _ => Expr::Op(Op::App, Box::new(step(*l, decls)?), r, aux),

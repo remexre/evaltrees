@@ -63,14 +63,10 @@ pub fn beta_number<Aux>(expr: &Expr<Aux>, decls: &[Decl<Aux>]) -> Option<isize> 
 
 /// Performs "normal" (for call-by-name and call-by-value) function application.
 pub fn apply<Aux: Clone>(
-    func: Expr<Aux>,
+    func: Symbol,
     args: Vec<Expr<Aux>>,
     decls: &[Decl<Aux>],
 ) -> Result<Expr<Aux>, Error> {
-    let func = match func {
-        Expr::Variable(var, _) => var,
-        func => panic!("Invalid callable expression: {}", func),
-    };
     let (decl, args) = decls
         .iter()
         .filter(|decl| decl.name == func)
@@ -80,8 +76,8 @@ pub fn apply<Aux: Clone>(
     Ok(apply_replacement(&decl.body, &args))
 }
 
-/// Returns whether the given expression is normalized enough to be a valid n-from-the-right-th
-/// argument to the decl with the given name. Used in call-by-name and lazy evaluation.
+/// Returns whether the given expression is normalized enough to be a valid nth argument to the
+/// decl with the given name. Used in call-by-name and lazy evaluation.
 pub fn arg_normal_enough<Aux: Clone>(
     value: &Expr<Aux>,
     n: usize,
@@ -91,7 +87,7 @@ pub fn arg_normal_enough<Aux: Clone>(
     let pats = decls
         .iter()
         .filter(|decl| decl.name == name)
-        .map(|decl| &decl.args[decl.args.len() - n]);
+        .map(|decl| &decl.args[n]);
     for pat in pats {
         if arg_normal_enough_for_pat(value, pat, decls) {
             if pat.matches(value).is_some() {

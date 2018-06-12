@@ -1,7 +1,8 @@
 use failure::Error;
+use symbol::Symbol;
 
 use ast::{Decl, Expr, Literal, Op, PrintStyle};
-use eval::util::{apply, beta_number, reducible};
+use eval::util::{apply, arg_normal_enough, beta_number, reducible};
 use eval::Evaluator;
 
 /// Call-by-name evaluation.
@@ -60,15 +61,24 @@ fn step<Aux: Clone>(expr: Expr<Aux>, decls: &[Decl<Aux>]) -> Result<Expr<Aux>, E
         Expr::Op(Op::App, l, r, aux) => match beta {
             Some(n) if n > 0 => Expr::Op(Op::App, l, r, aux),
             Some(0) => {
-                debug!("rip strictness analysis");
                 let mut args = vec![*r];
                 let mut func = *l;
-                while let Expr::Op(Op::App, f, a, _) = func {
+                let mut r_types = vec![aux];
+                while let Expr::Op(Op::App, f, a, ty) = func {
                     args.push(*a);
                     func = *f;
+                    r_types.push(ty);
                 }
                 args.reverse();
-                apply(func, args, decls)?
+                let func_name = match func {
+                    Expr::Variable(var, _) => var,
+                    func => panic!("Invalid callable expression: {}", func),
+                };
+                if let Some(n) = check_arg_normalization(func_name, &args, decls) {
+                    normalize_arg(n, func, args, r_types, decls)?
+                } else {
+                    apply(func_name, args, decls)?
+                }
             }
             _ => Expr::Op(Op::App, Box::new(step(*l, decls)?), r, aux),
         },
@@ -97,6 +107,19 @@ fn step<Aux: Clone>(expr: Expr<Aux>, decls: &[Decl<Aux>]) -> Result<Expr<Aux>, E
     Ok(expr)
 }
 
+fn check_arg_normalization<Aux: Clone>(
+    func: Symbol,
+    args: &[Expr<Aux>],
+    decls: &[Decl<Aux>],
+) -> Option<usize> {
+    for (i, a) in args.iter().enumerate() {
+        if !arg_normal_enough(a, i, func, decls) {
+            return Some(i);
+        }
+    }
+    None
+}
+
 fn math_op<Aux: Clone, F: Fn(usize, usize) -> Result<usize, Error>>(
     op: Op,
     l: Box<Expr<Aux>>,
@@ -116,10 +139,35 @@ fn math_op<Aux: Clone, F: Fn(usize, usize) -> Result<usize, Error>>(
     }
 }
 
+fn normalize_arg<Aux: Clone>(
+    n: usize,
+    func: Expr<Aux>,
+    mut args: Vec<Expr<Aux>>,
+    mut r_types: Vec<Aux>,
+    decls: &[Decl<Aux>],
+) -> Result<Expr<Aux>, Error> {
+    assert_eq!(args.len(), r_types.len());
+    args.reverse();
+    let mut out = func;
+    let mut i = 0;
+    while let Some(arg) = args.pop() {
+        let arg = if i == n { step(arg, decls)? } else { arg };
+        i += 1;
+        out = Expr::Op(
+            Op::App,
+            Box::new(out),
+            Box::new(arg),
+            r_types.pop().unwrap(),
+        );
+    }
+    assert_eq!(n, 0);
+    Ok(out)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ast::{Pattern, Type};
+    use ast::Pattern;
 
     #[test]
     fn app() {
@@ -127,19 +175,16 @@ mod tests {
             Decl {
                 name: "f".into(),
                 args: vec![
-                    Pattern::Binding("x".into(), Type::Int),
-                    Pattern::Binding("y".into(), Type::Int),
+                    Pattern::Binding("x".into(), ()),
+                    Pattern::Binding("y".into(), ()),
                 ],
                 body: Expr::Op(
                     Op::Add,
-                    Box::new(Expr::Variable("x".into(), Type::Int)),
-                    Box::new(Expr::Variable("y".into(), Type::Int)),
-                    Type::Int,
+                    Box::new(Expr::Variable("x".into(), ())),
+                    Box::new(Expr::Variable("y".into(), ())),
+                    (),
                 ),
-                aux: Type::Func(
-                    Box::new(Type::Int),
-                    Box::new(Type::Func(Box::new(Type::Int), Box::new(Type::Int))),
-                ),
+                aux: (),
             },
             Decl {
                 name: "".into(),
@@ -148,30 +193,24 @@ mod tests {
                     Op::App,
                     Box::new(Expr::Op(
                         Op::App,
-                        Box::new(Expr::Variable(
-                            "f".into(),
-                            Type::Func(
-                                Box::new(Type::Int),
-                                Box::new(Type::Func(Box::new(Type::Int), Box::new(Type::Int))),
-                            ),
-                        )),
+                        Box::new(Expr::Variable("f".into(), ())),
                         Box::new(Expr::Op(
                             Op::Add,
-                            Box::new(Expr::Literal(Literal::Int(1), Type::Int)),
-                            Box::new(Expr::Literal(Literal::Int(2), Type::Int)),
-                            Type::Int,
+                            Box::new(Expr::Literal(Literal::Int(1), ())),
+                            Box::new(Expr::Literal(Literal::Int(2), ())),
+                            (),
                         )),
-                        Type::Int,
+                        (),
                     )),
                     Box::new(Expr::Op(
                         Op::Add,
-                        Box::new(Expr::Literal(Literal::Int(3), Type::Int)),
-                        Box::new(Expr::Literal(Literal::Int(4), Type::Int)),
-                        Type::Int,
+                        Box::new(Expr::Literal(Literal::Int(3), ())),
+                        Box::new(Expr::Literal(Literal::Int(4), ())),
+                        (),
                     )),
-                    Type::Int,
+                    (),
                 ),
-                aux: Type::Int,
+                aux: (),
             },
         ]);
 
@@ -205,68 +244,50 @@ mod tests {
             Decl {
                 name: "f".into(),
                 args: vec![
-                    Pattern::Literal(Literal::Nil, Type::List(Box::new(Type::Int))),
-                    Pattern::Binding("y".into(), Type::Int),
+                    Pattern::Literal(Literal::Nil, ()),
+                    Pattern::Binding("y".into(), ()),
                 ],
-                body: Expr::Variable("y".into(), Type::Int),
-                aux: Type::Func(
-                    Box::new(Type::List(Box::new(Type::Int))),
-                    Box::new(Type::Func(Box::new(Type::Int), Box::new(Type::Int))),
-                ),
+                body: Expr::Variable("y".into(), ()),
+                aux: (),
             },
             Decl {
                 name: "f".into(),
                 args: vec![
                     Pattern::Cons(
-                        Box::new(Pattern::Binding("h".into(), Type::Int)),
-                        Box::new(Pattern::Binding("t".into(), Type::Int)),
-                        Type::List(Box::new(Type::Int)),
+                        Box::new(Pattern::Binding("h".into(), ())),
+                        Box::new(Pattern::Binding("t".into(), ())),
+                        (),
                     ),
-                    Pattern::Binding("y".into(), Type::Int),
+                    Pattern::Binding("y".into(), ()),
                 ],
                 body: Expr::Op(
                     Op::Add,
-                    Box::new(Expr::Variable("h".into(), Type::Int)),
+                    Box::new(Expr::Variable("h".into(), ())),
                     Box::new(Expr::Op(
                         Op::App,
                         Box::new(Expr::Op(
                             Op::App,
-                            Box::new(Expr::Variable(
-                                "f".into(),
-                                Type::Func(
-                                    Box::new(Type::List(Box::new(Type::Int))),
-                                    Box::new(Type::Func(Box::new(Type::Int), Box::new(Type::Int))),
-                                ),
-                            )),
-                            Box::new(Expr::Variable("t".into(), Type::Int)),
-                            Type::Func(Box::new(Type::Int), Box::new(Type::Int)),
+                            Box::new(Expr::Variable("f".into(), ())),
+                            Box::new(Expr::Variable("t".into(), ())),
+                            (),
                         )),
-                        Box::new(Expr::Variable("y".into(), Type::Int)),
-                        Type::Int,
+                        Box::new(Expr::Variable("y".into(), ())),
+                        (),
                     )),
-                    Type::Func(
-                        Box::new(Type::List(Box::new(Type::Int))),
-                        Box::new(Type::Func(Box::new(Type::Int), Box::new(Type::Int))),
-                    ),
+                    (),
                 ),
-                aux: Type::Func(
-                    Box::new(Type::List(Box::new(Type::Int))),
-                    Box::new(Type::Func(Box::new(Type::Int), Box::new(Type::Int))),
-                ),
+                aux: (),
             },
             Decl {
                 name: "g".into(),
-                args: vec![Pattern::Binding("x".into(), Type::Int)],
+                args: vec![Pattern::Binding("x".into(), ())],
                 body: Expr::Op(
                     Op::Cons,
-                    Box::new(Expr::Variable("x".into(), Type::Int)),
-                    Box::new(Expr::Literal(Literal::Nil, Type::List(Box::new(Type::Int)))),
-                    Type::List(Box::new(Type::Int)),
+                    Box::new(Expr::Variable("x".into(), ())),
+                    Box::new(Expr::Literal(Literal::Nil, ())),
+                    (),
                 ),
-                aux: Type::Func(
-                    Box::new(Type::Int),
-                    Box::new(Type::List(Box::new(Type::Int))),
-                ),
+                aux: (),
             },
             Decl {
                 name: "".into(),
@@ -275,41 +296,29 @@ mod tests {
                     Op::App,
                     Box::new(Expr::Op(
                         Op::App,
-                        Box::new(Expr::Variable(
-                            "f".into(),
-                            Type::Func(
-                                Box::new(Type::List(Box::new(Type::Int))),
-                                Box::new(Type::Func(Box::new(Type::Int), Box::new(Type::Int))),
-                            ),
-                        )),
+                        Box::new(Expr::Variable("f".into(), ())),
                         Box::new(Expr::Op(
                             Op::App,
-                            Box::new(Expr::Variable(
-                                "g".into(),
-                                Type::Func(
-                                    Box::new(Type::Int),
-                                    Box::new(Type::List(Box::new(Type::Int))),
-                                ),
-                            )),
+                            Box::new(Expr::Variable("g".into(), ())),
                             Box::new(Expr::Op(
                                 Op::Add,
-                                Box::new(Expr::Literal(Literal::Int(1), Type::Int)),
-                                Box::new(Expr::Literal(Literal::Int(2), Type::Int)),
-                                Type::Int,
+                                Box::new(Expr::Literal(Literal::Int(1), ())),
+                                Box::new(Expr::Literal(Literal::Int(2), ())),
+                                (),
                             )),
-                            Type::List(Box::new(Type::Int)),
+                            (),
                         )),
-                        Type::Func(Box::new(Type::Int), Box::new(Type::Int)),
+                        (),
                     )),
                     Box::new(Expr::Op(
                         Op::Add,
-                        Box::new(Expr::Literal(Literal::Int(3), Type::Int)),
-                        Box::new(Expr::Literal(Literal::Int(4), Type::Int)),
-                        Type::Int,
+                        Box::new(Expr::Literal(Literal::Int(3), ())),
+                        Box::new(Expr::Literal(Literal::Int(4), ())),
+                        (),
                     )),
-                    Type::Int,
+                    (),
                 ),
-                aux: Type::Int,
+                aux: (),
             },
         ]);
 
@@ -335,7 +344,10 @@ mod tests {
         assert!(!evaluator.normal_form());
 
         assert!(evaluator.step().is_ok());
-        assert_eq!(format!("{}", evaluator), "Add(Add(1, 2), Add(3, 4))");
+        assert_eq!(
+            format!("{}", evaluator),
+            "Add(3, App(App(f, []), Add(3, 4)))"
+        );
         assert!(!evaluator.normal_form());
 
         assert!(evaluator.step().is_ok());
