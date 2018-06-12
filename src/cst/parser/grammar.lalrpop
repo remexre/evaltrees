@@ -2,7 +2,7 @@ use symbol::Symbol;
 
 use ast::{Literal, Op, Pattern, PrintStyle};
 use cst::{Decl, Expr};
-use eval::{CallByName, CallByValue};
+use eval::{CallByName, CallByValue, LazyEvaluation};
 use repl::ReplCommand;
 
 grammar;
@@ -15,6 +15,9 @@ pub ReplCommand: ReplCommand = {
 	":cst" => ReplCommand::PrintStyle(PrintStyle::CST),
 	":decl" <d: Decl> ";;"? => ReplCommand::Decl(d),
 	":help" => ReplCommand::Help,
+	":l" => ReplCommand::List,
+	":lazy" => ReplCommand::Evaluator(|decls| Box::new(LazyEvaluation::new(decls))),
+	":list" => ReplCommand::List,
 	":q" => ReplCommand::Quit,
 	":quit" => ReplCommand::Quit,
 	":reset" => ReplCommand::Reset,

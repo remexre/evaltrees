@@ -186,7 +186,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "evaltrees"
-version = "0.1.0-pre"
+version = "0.1.0"
 dependencies = [
  "display_attr 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "either 1.5.0 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -202,9 +202,9 @@ dependencies = [
 
 [[package]]
 name = "evaltrees-cli"
-version = "0.0.1"
+version = "0.1.0"
 dependencies = [
- "evaltrees 0.1.0-pre",
+ "evaltrees 0.1.0",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "human-panic 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "linefeed 0.5.0 (registry+https://github.com/rust-lang/crates.io-index)",

@@ -1,7 +1,7 @@
 use std::path::PathBuf;
 
 use evaltrees::ast::{Decl, PrintStyle, Type};
-use evaltrees::eval::{CallByName, CallByValue, Evaluator};
+use evaltrees::eval::{CallByName, CallByValue, Evaluator, LazyEvaluation};
 use failure::Error;
 
 #[derive(Debug, StructOpt)]
@@ -36,6 +36,7 @@ impl Options {
     /// Creates an evaluator for the given declarations as set by the flags.
     pub fn make_evaluator(&self) -> Result<fn(Vec<Decl<Type>>) -> Box<Evaluator<Type>>, Error> {
         match self.evaluator.as_ref().map(|s| s as &str) {
+            Some("lazy") => Ok(|decls| Box::new(LazyEvaluation::new(decls))),
             Some("name") => Ok(|decls| Box::new(CallByName::new(decls))),
             Some("value") | None => Ok(|decls| Box::new(CallByValue::new(decls))),
             Some(e) => bail!(

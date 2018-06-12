@@ -1,5 +1,6 @@
 //! Evaluation and evaluators.
 
+mod lazy;
 mod name;
 pub mod util;
 mod value;
@@ -9,6 +10,7 @@ use std::fmt::Display;
 use failure::Error;
 
 use ast::PrintStyle;
+pub use eval::lazy::LazyEvaluation;
 pub use eval::name::CallByName;
 pub use eval::value::CallByValue;
 

@@ -19,6 +19,9 @@ pub enum ReplCommand {
     /// Prints a help menu.
     Help,
 
+    /// Lists all declarations.
+    List,
+
     /// Changes the print style.
     PrintStyle(PrintStyle),
 
@@ -35,6 +38,22 @@ pub enum ReplCommand {
 impl ReplCommand {
     /// Returns a help message for the commands.
     pub fn help() -> &'static str {
-        "TODO"
+        "<expr>              Evaluates an expression\
+         :decl <decl>        Adds a declaration\
+         :l                  Lists all declarations\
+         :list               Lists all declarations\
+         :t <expr>           Prints the type of an expression\
+         \
+         :cbn                Switches to call-by-name evaluation\
+         :cbv                Switches to call-by-value evaluation\
+         :lazy               Switches to lazy evaluation\
+         \
+         :ast                Switches to AST print style\
+         :cst                Switches to CST print style\
+         \
+         :help               Prints this help message\
+         :q                  Quits the REPL\
+         :quit               Quits the REPL\
+         :reset              Removes all decls from the REPL"
     }
 }

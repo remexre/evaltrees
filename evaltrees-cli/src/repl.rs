@@ -20,6 +20,9 @@ pub fn run(mut decls: Vec<Decl<Type>>, mut print_style: PrintStyle) -> Result<()
             ReadResult::Input(line) => line,
             _ => break Ok(()),
         };
+        if line.trim() == "" {
+            continue;
+        }
         match repl_one(
             &iface,
             &line,
@@ -84,6 +87,10 @@ fn repl_one<T: Terminal>(
         }
         ReplCommand::Help => {
             writeln!(iface, "{}", ReplCommand::help())?;
+            Ok(true)
+        }
+        ReplCommand::List => {
+            print_decls(&iface, &decls, *print_style)?;
             Ok(true)
         }
         ReplCommand::PrintStyle(sty) => {

@@ -3,7 +3,7 @@ authors = ["Nathan Ringo <remexre@gmail.com>"]
 description = "The command-line front-end to evaltrees."
 license = "Apache-2.0/MIT"
 name = "evaltrees-cli"
-version = "0.0.1"
+version = "0.1.0"
 
 [dependencies]
 evaltrees = { path = ".." }
