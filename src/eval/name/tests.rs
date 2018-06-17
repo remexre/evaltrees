@@ -71,6 +71,70 @@ fn app() {
 }
 
 #[test]
+fn id_int() {
+    let mut evaluator = CallByName::new(vec![
+        Decl {
+            name: "f".into(),
+            args: vec![Pattern::Literal(Literal::Int(0), ())],
+            body: Expr::Literal(Literal::Int(0), ()),
+            aux: (),
+        },
+        Decl {
+            name: "f".into(),
+            args: vec![Pattern::Binding("x".into(), ())],
+            body: Expr::Op(
+                Op::Add,
+                Box::new(Expr::Literal(Literal::Int(1), ())),
+                Box::new(Expr::Op(
+                    Op::App,
+                    Box::new(Expr::Variable("f".into(), ())),
+                    Box::new(Expr::Op(
+                        Op::Sub,
+                        Box::new(Expr::Variable("x".into(), ())),
+                        Box::new(Expr::Literal(Literal::Int(1), ())),
+                        (),
+                    )),
+                    (),
+                )),
+                (),
+            ),
+            aux: (),
+        },
+        Decl {
+            name: "".into(),
+            args: vec![],
+            body: Expr::Op(
+                Op::App,
+                Box::new(Expr::Variable("f".into(), ())),
+                Box::new(Expr::Literal(Literal::Int(1), ())),
+                (),
+            ),
+            aux: (),
+        },
+    ]);
+
+    assert!(evaluator.step().is_ok());
+    assert_eq!(format!("{}", evaluator), "App(f, 1)");
+    assert!(!evaluator.normal_form());
+
+    assert!(evaluator.step().is_ok());
+    assert_eq!(format!("{}", evaluator), "Add(1, App(f, Sub(1, 1)))");
+    assert!(!evaluator.normal_form());
+
+    assert!(evaluator.step().is_ok());
+    assert_eq!(format!("{}", evaluator), "Add(1, App(f, 0))");
+    assert!(!evaluator.normal_form());
+
+    assert!(evaluator.step().is_ok());
+    assert_eq!(format!("{}", evaluator), "Add(1, 0)");
+    assert!(!evaluator.normal_form());
+
+    assert!(evaluator.step().is_ok());
+    assert_eq!(format!("{}", evaluator), "1");
+    assert!(evaluator.normal_form());
+}
+
+#[test]
 fn strictness() {
     let mut evaluator = CallByName::new(vec![
         Decl {
