@@ -4,8 +4,8 @@ mod tests;
 use failure::Error;
 use symbol::Symbol;
 
-use ast::{Decl, Expr, Literal, Op, PrintStyle};
-use eval::util::{apply, arg_normal_enough, beta_number, reducible};
+use ast::{Decl, Expr, Literal, Op, Pattern, PrintStyle};
+use eval::util::{apply, beta_number, reducible};
 use eval::Evaluator;
 
 /// Call-by-name evaluation.
@@ -108,6 +108,50 @@ fn step<Aux: Clone>(expr: Expr<Aux>, decls: &[Decl<Aux>]) -> Result<Expr<Aux>, E
         }
     };
     Ok(expr)
+}
+
+/// Returns whether the given expression is normalized enough to be a valid nth argument to the
+/// decl with the given name.
+pub fn arg_normal_enough<Aux: Clone>(
+    value: &Expr<Aux>,
+    n: usize,
+    name: Symbol,
+    decls: &[Decl<Aux>],
+) -> bool {
+    let pats = decls
+        .iter()
+        .filter(|decl| decl.name == name)
+        .map(|decl| &decl.args[n]);
+    for pat in pats {
+        if arg_normal_enough_for_pat(value, pat, decls) {
+            if pat.matches(value).is_some() {
+                return true;
+            }
+        } else {
+            return false;
+        }
+    }
+    true
+}
+
+fn arg_normal_enough_for_pat<Aux>(
+    value: &Expr<Aux>,
+    pat: &Pattern<Aux>,
+    decls: &[Decl<Aux>],
+) -> bool {
+    match (value, pat) {
+        (_, &Pattern::Binding(_, _)) => true,
+        (_, &Pattern::Literal(_, _)) => true,
+        (&Expr::Op(Op::Cons, ref eh, ref et, _), &Pattern::Cons(ref ph, ref pt, _)) => {
+            arg_normal_enough_for_pat(eh, ph, decls) && arg_normal_enough_for_pat(et, pt, decls)
+        }
+        (e, &Pattern::Cons(_, _, _)) => {
+            if !reducible(e, decls) {
+                panic!("Looks like we're stuck; this should've been a type error earlier on?");
+            }
+            false
+        }
+    }
 }
 
 fn check_arg_normalization<Aux: Clone>(

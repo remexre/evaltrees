@@ -1,6 +1,6 @@
 //! Helpers for implementing evaluators.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use failure::Error;
 use symbol::Symbol;
@@ -76,50 +76,6 @@ pub fn apply<Aux: Clone>(
     Ok(apply_replacement(&decl.body, &args))
 }
 
-/// Returns whether the given expression is normalized enough to be a valid nth argument to the
-/// decl with the given name. Used in call-by-name and lazy evaluation.
-pub fn arg_normal_enough<Aux: Clone>(
-    value: &Expr<Aux>,
-    n: usize,
-    name: Symbol,
-    decls: &[Decl<Aux>],
-) -> bool {
-    let pats = decls
-        .iter()
-        .filter(|decl| decl.name == name)
-        .map(|decl| &decl.args[n]);
-    for pat in pats {
-        if arg_normal_enough_for_pat(value, pat, decls) {
-            if pat.matches(value).is_some() {
-                return true;
-            }
-        } else {
-            return false;
-        }
-    }
-    true
-}
-
-fn arg_normal_enough_for_pat<Aux>(
-    value: &Expr<Aux>,
-    pat: &Pattern<Aux>,
-    decls: &[Decl<Aux>],
-) -> bool {
-    match (value, pat) {
-        (_, &Pattern::Binding(_, _)) => true,
-        (_, &Pattern::Literal(_, _)) => true,
-        (&Expr::Op(Op::Cons, ref eh, ref et, _), &Pattern::Cons(ref ph, ref pt, _)) => {
-            arg_normal_enough_for_pat(eh, ph, decls) && arg_normal_enough_for_pat(et, pt, decls)
-        }
-        (e, &Pattern::Cons(_, _, _)) => {
-            if !reducible(e, decls) {
-                panic!("Looks like we're stuck; this should've been a type error earlier on?");
-            }
-            false
-        }
-    }
-}
-
 fn apply_replacement<Aux: Clone>(
     expr: &Expr<Aux>,
     replacement: &BTreeMap<Symbol, Expr<Aux>>,
@@ -158,4 +114,21 @@ fn matches_all<Aux: Clone>(
         map.extend(pat.matches(arg)?);
     }
     Some(map)
+}
+
+/// Computes the transitive closure,
+pub fn transitive_closure<F, I1, I2, T>(initial: I1, op: F) -> BTreeSet<T>
+where
+    F: Fn(&T) -> I2,
+    I1: IntoIterator<Item = T>,
+    I2: IntoIterator<Item = T>,
+    T: Clone + Ord,
+{
+    let mut set = initial.into_iter().collect::<BTreeSet<T>>();
+    let mut prev = BTreeSet::new();
+    while set != prev {
+        prev = set.clone();
+        set.extend(prev.iter().flat_map(&op));
+    }
+    set
 }

@@ -1,5 +1,5 @@
 use super::*;
-use ast::Pattern;
+use ast::{Expr, Pattern};
 
 #[test]
 fn app() {
@@ -75,7 +75,7 @@ fn sharing() {
     let mut evaluator = LazyEvaluation::new(vec![
         Decl {
             name: "f".into(),
-            args: vec![Pattern::Binding("s".into(), ())],
+            args: vec![Pattern::Binding("x".into(), ())],
             body: Expr::Op(
                 Op::Add,
                 Box::new(Expr::Variable("x".into(), ())),
@@ -114,33 +114,33 @@ fn sharing() {
     assert!(evaluator.step().is_ok());
     assert_eq!(
         format!("{}", evaluator),
-        "App(f, Add($0, $0))\n  where $0 = Mul(2, 3)"
+        "Add($0, $0)\n  where $0 = App(f, Mul(2, 3))"
     );
     assert!(!evaluator.normal_form());
 
     assert!(evaluator.step().is_ok());
     assert_eq!(
         format!("{}", evaluator),
-        "Add($1, $1)\n  where $0 = Mul(2, 3)\n        $1 = Add($0, $0)"
+        "Add($0, $0)\n  where $0 = Add($1, $1)\n        $1 = Mul(2, 3)"
     );
     assert!(!evaluator.normal_form());
 
     assert!(evaluator.step().is_ok());
     assert_eq!(
         format!("{}", evaluator),
-        "Add($1, $1)\n  where $0 = 6\n        $1 = Add($0, $0)"
+        "Add($0, $0)\n  where $0 = Add($1, $1)\n        $1 = 6"
     );
     assert!(!evaluator.normal_form());
 
     assert!(evaluator.step().is_ok());
     assert_eq!(
         format!("{}", evaluator),
-        "Add($1, $1)\n  where $1 = Add(6, 6)"
+        "Add($0, $0)\n  where $0 = Add(6, 6)"
     );
     assert!(!evaluator.normal_form());
 
     assert!(evaluator.step().is_ok());
-    assert_eq!(format!("{}", evaluator), "Add($1, $1)\n  where $1 = 12");
+    assert_eq!(format!("{}", evaluator), "Add($0, $0)\n  where $0 = 12");
     assert!(!evaluator.normal_form());
 
     assert!(evaluator.step().is_ok());

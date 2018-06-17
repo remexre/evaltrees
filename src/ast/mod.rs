@@ -172,6 +172,32 @@ impl<Aux> Expr<Aux> {
         }
     }
 
+    /// Returns the number of occurrences of variables.
+    pub fn free_count(&self) -> BTreeMap<Symbol, usize> {
+        match *self {
+            Expr::If(ref c, ref t, ref e, _) => {
+                let mut map = c.free_count();
+                for (var, count) in t.free_count().into_iter().chain(e.free_count()) {
+                    *map.entry(var).or_insert(0) += count;
+                }
+                map
+            }
+            Expr::Literal(_, _) => BTreeMap::new(),
+            Expr::Op(_, ref l, ref r, _) => {
+                let mut map = l.free_count();
+                for (var, count) in r.free_count() {
+                    *map.entry(var).or_insert(0) += count;
+                }
+                map
+            }
+            Expr::Variable(name, _) => {
+                let mut map = BTreeMap::new();
+                map.insert(name, 1);
+                map
+            }
+        }
+    }
+
     /// Returns the free variables of an expression.
     pub fn freevars(&self) -> BTreeSet<Symbol> {
         match *self {

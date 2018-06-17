@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
-use ast::{Decl, Expr, Literal, Op, Pattern};
+use ast::{Expr, Literal, Op};
+use cst::Expr as CstExpr;
 use symbol::Symbol;
 
 /// An expression type used only in lazy evaluation, to add the where-bound variables.
@@ -54,6 +55,43 @@ impl<Aux> LazyExpr<Aux> {
                 set.insert(num);
                 set
             }
+        }
+    }
+}
+
+impl<Aux: Clone> LazyExpr<Aux> {
+    /// Applies a replacement to the expression.
+    pub fn apply_replacement(&mut self, idx: usize, expr: &LazyExpr<Aux>) {
+        match *self {
+            LazyExpr::If(ref mut c, ref mut t, ref mut e, _) => {
+                c.apply_replacement(idx, expr);
+                t.apply_replacement(idx, expr);
+                e.apply_replacement(idx, expr);
+            }
+            LazyExpr::Op(_, ref mut l, ref mut r, _) => {
+                l.apply_replacement(idx, expr);
+                r.apply_replacement(idx, expr);
+            }
+            LazyExpr::WhereVar(num, _) if num == idx => {
+                *self = expr.clone();
+            }
+            LazyExpr::Literal(_, _) | LazyExpr::Variable(_, _) | LazyExpr::WhereVar(_, _) => {}
+        }
+    }
+
+    /// Converts the LazyExpr into a CST approximation of itself, for printing.
+    pub fn to_cst(&self) -> CstExpr {
+        Expr::from(self.clone()).to_cst()
+    }
+
+    /// Gets the auxiliary data as a reference.
+    pub fn aux_ref(&self) -> &Aux {
+        match *self {
+            LazyExpr::If(_, _, _, ref aux)
+            | LazyExpr::Literal(_, ref aux)
+            | LazyExpr::Op(_, _, _, ref aux)
+            | LazyExpr::Variable(_, ref aux)
+            | LazyExpr::WhereVar(_, ref aux) => aux,
         }
     }
 }

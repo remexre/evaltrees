@@ -1,6 +1,6 @@
 //! Evaluation and evaluators.
 
-mod lazy;
+pub(crate) mod lazy;
 mod name;
 pub mod util;
 mod value;
