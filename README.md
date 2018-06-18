@@ -8,7 +8,6 @@ Additionally, shows the evaluation of the "main expression" as it proceeds.
 Intended as an instructional aid for CSCI2041 at the University of Minnesota.
 
 The interpreter can be run in call-by-name, call-by-need, or call-by-value modes.
-Tail-call optimization can be enabled or disabled.
 Expression evaluations can be show as concrete or abstract syntax.
 
 See `doc/syntax.md` for a description of the language's syntax.
