@@ -48,7 +48,10 @@ fn main() {
                 }
             }
         }
-        debug!("{}", err.backtrace());
+        let bt = err.backtrace().to_string();
+        if bt != "" {
+            debug!("{}", bt)
+        }
         exit(1);
     }
 }

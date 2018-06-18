@@ -1,7 +1,6 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
 use ast::{Decl, Expr};
-use eval::lazy::LazyExpr;
 
 /// The style of printing to `Display` with.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -18,9 +17,9 @@ pub enum PrintStyle {
 }
 
 macro_rules! display_type {
-    ($name:ident, $ty:ident $(, $trait:path)*) => {
-        struct $name<'a, Aux: 'a $(+ $trait)*>(&'a $ty<Aux>, PrintStyle);
-        impl<'a, Aux: 'a $(+ $trait)*> Display for $name<'a, Aux> {
+    ($name:ident, $ty:ident) => {
+        struct $name<'a, Aux: 'a>(&'a $ty<Aux>, PrintStyle);
+        impl<'a, Aux: 'a> Display for $name<'a, Aux> {
             fn fmt(&self, fmt: &mut Formatter) -> FmtResult {
                 match self.1 {
                     PrintStyle::AST => Display::fmt(self.0, fmt),
@@ -29,9 +28,7 @@ macro_rules! display_type {
             }
         }
 
-        impl<Aux> $ty<Aux>
-            where $(Aux:$trait),*
-        {
+        impl<Aux> $ty<Aux> {
             /// Returns a Display that follows the given print style.
             pub fn display_as<'a>(&'a self, style: PrintStyle) -> impl 'a + Display {
                 $name(self, style)
@@ -42,4 +39,3 @@ macro_rules! display_type {
 
 display_type!(DisplayDecl, Decl);
 display_type!(DisplayExpr, Expr);
-display_type!(DisplayLazyExpr, LazyExpr, Clone);

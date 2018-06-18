@@ -1,6 +1,6 @@
 //! Utilities for implementing a REPL.
 
-use ast::{Decl, PrintStyle, Type};
+use ast::{Decl, PrintStyle};
 use cst::{Decl as CstDecl, Expr};
 use eval::Evaluator;
 
@@ -11,7 +11,7 @@ pub enum ReplCommand {
     Decl(CstDecl),
 
     /// Sets the function used to construct an evaluator.
-    Evaluator(fn(Vec<Decl<Type>>) -> Box<Evaluator<Type>>),
+    Evaluator(fn(Vec<Decl<()>>) -> Box<Evaluator>),
 
     /// Evaluates an expression.
     Expr(Expr),

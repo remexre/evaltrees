@@ -9,7 +9,8 @@ pub fn run(mut decls: Vec<Decl<Type>>, options: &Options) -> Result<(), Error> {
 
     print_decls(&decls, options.print_style());
 
-    let mut evaluator = options.make_evaluator()?(decls);
+    let mut evaluator =
+        options.make_evaluator()?(decls.into_iter().map(|d| d.map_aux(|_| ())).collect());
     println!("{}", evaluator);
     while !evaluator.normal_form() {
         evaluator.step()?;

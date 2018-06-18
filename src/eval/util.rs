@@ -64,15 +64,20 @@ pub fn beta_number<Aux>(expr: &Expr<Aux>, decls: &[Decl<Aux>]) -> Option<isize> 
 /// Performs "normal" (for call-by-name and call-by-value) function application.
 pub fn apply<Aux: Clone>(
     func: Symbol,
-    args: Vec<Expr<Aux>>,
+    args: &[Expr<Aux>],
     decls: &[Decl<Aux>],
 ) -> Result<Expr<Aux>, Error> {
-    let (decl, args) = decls
+    let decl = decls
         .iter()
-        .filter(|decl| decl.name == func)
-        .filter_map(|decl| matches_all(&decl.args, &args).map(|args| (decl, args)))
-        .next()
-        .ok_or_else(|| format_err!("Pattern match failed when calling {}", func))?;
+        .find(|decl| decl.name == func)
+        .ok_or_else(|| format_err!("No matching declaration for call to function {}", func))?;
+    apply_to(decl, args)
+}
+
+/// Applies arguments to a function. Panics if the arguments do not match the function's
+/// parameters.
+pub fn apply_to<Aux: Clone>(decl: &Decl<Aux>, args: &[Expr<Aux>]) -> Result<Expr<Aux>, Error> {
+    let args = matches_all(&decl.args, &args).unwrap();
     Ok(apply_replacement(&decl.body, &args))
 }
 

@@ -13,7 +13,7 @@ pub fn run(mut decls: Vec<Decl<Type>>, mut print_style: PrintStyle) -> Result<()
     let iface = Interface::new("evaltrees")?;
     iface.set_prompt("> ");
     print_decls(&iface, &decls, print_style)?;
-    let mut make_evaluator: fn(Vec<Decl<Type>>) -> Box<Evaluator<Type>> =
+    let mut make_evaluator: fn(Vec<Decl<()>>) -> Box<Evaluator> =
         |decls| Box::new(CallByValue::new(decls));
     loop {
         let line = match iface.read_line()? {
@@ -44,7 +44,7 @@ fn repl_one<T: Terminal>(
     iface: &Interface<T>,
     line: &str,
     decls: &mut Vec<Decl<Type>>,
-    make_evaluator: &mut fn(Vec<Decl<Type>>) -> Box<Evaluator<Type>>,
+    make_evaluator: &mut fn(Vec<Decl<()>>) -> Box<Evaluator>,
     print_style: &mut PrintStyle,
 ) -> Result<bool, Error> {
     match line.parse()? {
@@ -74,7 +74,8 @@ fn repl_one<T: Terminal>(
                 decls.clone(),
             )?;
 
-            let mut evaluator = make_evaluator(decls);
+            let mut evaluator =
+                make_evaluator(decls.into_iter().map(|d| d.map_aux(|_| ())).collect());
             evaluator.set_print_style(*print_style);
             loop {
                 if !evaluator.normal_form() {

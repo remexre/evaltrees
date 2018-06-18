@@ -10,32 +10,25 @@ use eval::Evaluator;
 /// Call-by-value evaluation.
 #[derive(Debug, DisplayAttr)]
 #[display(fmt = "{}", arg = "expr.as_ref().unwrap().display_as(*print_style)")]
-pub struct CallByValue<Aux> {
-    decls: Vec<Decl<Aux>>,
-    expr: Option<Expr<Aux>>,
+pub struct CallByValue {
+    decls: Vec<Decl<()>>,
+    expr: Option<Expr<()>>,
     print_style: PrintStyle,
 }
 
-impl<Aux: Clone> CallByValue<Aux> {
+impl CallByValue {
     /// Creates a call-by-value interpreter from a list of declarations.
     /// The nameless declaration will be the expression.
-    pub fn new(decls: Vec<Decl<Aux>>) -> CallByValue<Aux> {
-        let expr = {
-            let nameless = decls
-                .iter()
-                .find(|decl| decl.name == "".into())
-                .expect("Nameless declaration missing");
-            Expr::Variable("".into(), nameless.aux_ref().clone())
-        };
+    pub fn new(decls: Vec<Decl<()>>) -> CallByValue {
         CallByValue {
             decls,
-            expr: Some(expr),
+            expr: Some(Expr::Variable("".into(), ())),
             print_style: PrintStyle::AST,
         }
     }
 }
 
-impl<Aux: Clone> Evaluator<Aux> for CallByValue<Aux> {
+impl Evaluator for CallByValue {
     fn normal_form(&self) -> bool {
         !reducible(self.expr.as_ref().unwrap(), &self.decls)
     }
@@ -51,52 +44,52 @@ impl<Aux: Clone> Evaluator<Aux> for CallByValue<Aux> {
     }
 }
 
-fn step<Aux: Clone>(expr: Expr<Aux>, decls: &[Decl<Aux>]) -> Result<Expr<Aux>, Error> {
+fn step(expr: Expr<()>, decls: &[Decl<()>]) -> Result<Expr<()>, Error> {
     let beta = beta_number(&expr, decls);
     let expr = match expr {
-        Expr::If(c, t, e, aux) => match *c {
-            Expr::Literal(Literal::True, _) => *t,
-            Expr::Literal(Literal::False, _) => *e,
-            c => Expr::If(Box::new(step(c, decls)?), t, e, aux),
+        Expr::If(c, t, e, ()) => match *c {
+            Expr::Literal(Literal::True, ()) => *t,
+            Expr::Literal(Literal::False, ()) => *e,
+            c => Expr::If(Box::new(step(c, decls)?), t, e, ()),
         },
-        Expr::Literal(l, aux) => Expr::Literal(l, aux),
-        Expr::Op(Op::App, l, r, aux) => {
+        Expr::Literal(l, ()) => Expr::Literal(l, ()),
+        Expr::Op(Op::App, l, r, ()) => {
             if reducible(&l, decls) {
-                Expr::Op(Op::App, Box::new(step(*l, decls)?), r, aux)
+                Expr::Op(Op::App, Box::new(step(*l, decls)?), r, ())
             } else if reducible(&r, decls) {
-                Expr::Op(Op::App, l, Box::new(step(*r, decls)?), aux)
+                Expr::Op(Op::App, l, Box::new(step(*r, decls)?), ())
             } else {
                 match beta {
-                    Some(n) if n > 0 => Expr::Op(Op::App, l, r, aux),
+                    Some(n) if n > 0 => Expr::Op(Op::App, l, r, ()),
                     Some(0) => {
                         let mut args = vec![*r];
                         let mut func = *l;
-                        while let Expr::Op(Op::App, f, a, _) = func {
+                        while let Expr::Op(Op::App, f, a, ()) = func {
                             args.push(*a);
                             func = *f;
                         }
                         args.reverse();
                         let func = match func {
-                            Expr::Variable(var, _) => var,
+                            Expr::Variable(var, ()) => var,
                             func => panic!("Invalid callable expression: {}", func),
                         };
-                        apply(func, args, decls)?
+                        apply(func, &args, decls)?
                     }
-                    _ => Expr::Op(Op::App, Box::new(step(*l, decls)?), r, aux),
+                    _ => Expr::Op(Op::App, Box::new(step(*l, decls)?), r, ()),
                 }
             }
         }
-        Expr::Op(Op::Cons, l, r, aux) => if reducible(&l, decls) {
-            Expr::Op(Op::Cons, Box::new(step(*l, decls)?), r, aux)
+        Expr::Op(Op::Cons, l, r, ()) => if reducible(&l, decls) {
+            Expr::Op(Op::Cons, Box::new(step(*l, decls)?), r, ())
         } else {
-            Expr::Op(Op::Cons, l, Box::new(step(*r, decls)?), aux)
+            Expr::Op(Op::Cons, l, Box::new(step(*r, decls)?), ())
         },
-        Expr::Op(Op::Add, l, r, aux) => math_op(Op::Add, l, r, aux, decls, |l, r| Ok(l + r))?,
-        Expr::Op(Op::Sub, l, r, aux) => math_op(Op::Sub, l, r, aux, decls, |l, r| Ok(l - r))?,
-        Expr::Op(Op::Mul, l, r, aux) => math_op(Op::Mul, l, r, aux, decls, |l, r| Ok(l * r))?,
-        Expr::Op(Op::Div, l, r, aux) => math_op(Op::Div, l, r, aux, decls, |l, r| Ok(l / r))?,
-        Expr::Op(Op::Mod, l, r, aux) => math_op(Op::Mod, l, r, aux, decls, |l, r| Ok(l % r))?,
-        Expr::Variable(var, aux) => {
+        Expr::Op(Op::Add, l, r, ()) => math_op(Op::Add, l, r, decls, |l, r| Ok(l + r))?,
+        Expr::Op(Op::Sub, l, r, ()) => math_op(Op::Sub, l, r, decls, |l, r| Ok(l - r))?,
+        Expr::Op(Op::Mul, l, r, ()) => math_op(Op::Mul, l, r, decls, |l, r| Ok(l * r))?,
+        Expr::Op(Op::Div, l, r, ()) => math_op(Op::Div, l, r, decls, |l, r| Ok(l / r))?,
+        Expr::Op(Op::Mod, l, r, ()) => math_op(Op::Mod, l, r, decls, |l, r| Ok(l % r))?,
+        Expr::Variable(var, ()) => {
             let decl = decls
                 .iter()
                 .find(|decl| decl.name == var)
@@ -104,28 +97,27 @@ fn step<Aux: Clone>(expr: Expr<Aux>, decls: &[Decl<Aux>]) -> Result<Expr<Aux>, E
             if decl.args.is_empty() {
                 decl.body.clone()
             } else {
-                Expr::Variable(var, aux)
+                Expr::Variable(var, ())
             }
         }
     };
     Ok(expr)
 }
 
-fn math_op<Aux: Clone, F: Fn(usize, usize) -> Result<usize, Error>>(
+fn math_op<F: Fn(usize, usize) -> Result<usize, Error>>(
     op: Op,
-    l: Box<Expr<Aux>>,
-    r: Box<Expr<Aux>>,
-    aux: Aux,
-    decls: &[Decl<Aux>],
+    l: Box<Expr<()>>,
+    r: Box<Expr<()>>,
+    decls: &[Decl<()>],
     f: F,
-) -> Result<Expr<Aux>, Error> {
-    if let Expr::Literal(Literal::Int(ln), _) = *l {
-        if let Expr::Literal(Literal::Int(rn), _) = *r {
-            f(ln, rn).map(|n| Expr::Literal(Literal::Int(n), aux))
+) -> Result<Expr<()>, Error> {
+    if let Expr::Literal(Literal::Int(ln), ()) = *l {
+        if let Expr::Literal(Literal::Int(rn), ()) = *r {
+            f(ln, rn).map(|n| Expr::Literal(Literal::Int(n), ()))
         } else {
-            Ok(Expr::Op(op, l, Box::new(step(*r, decls)?), aux))
+            Ok(Expr::Op(op, l, Box::new(step(*r, decls)?), ()))
         }
     } else {
-        Ok(Expr::Op(op, Box::new(step(*l, decls)?), r, aux))
+        Ok(Expr::Op(op, Box::new(step(*l, decls)?), r, ()))
     }
 }
