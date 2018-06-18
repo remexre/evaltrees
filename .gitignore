@@ -1,5 +1,4 @@
 .*
-!.babelrc
 !.gitignore
 !.travis/
 !.travis.yml
@@ -8,4 +7,4 @@ dist/
 node_modules/
 target/
 
-*.pdf
+/web/src/generated/

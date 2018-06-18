@@ -1,8 +1,5 @@
 [workspace]
-members = [
-	".",
-	"evaltrees-cli",
-]
+members = [".", "evaltrees-cli"]
 
 [package]
 authors = ["Nathan Ringo <remexre@gmail.com>"]

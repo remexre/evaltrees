@@ -1,0 +1,13 @@
+body {
+	background-color: black;
+	display: flex;
+	flex-direction: row;
+	height: 100vh;
+	margin: 0;
+}
+
+#terminal {
+	display: flex;
+	flex-grow: 1;
+	margin: 0.5em;
+}

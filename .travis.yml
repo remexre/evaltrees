@@ -15,7 +15,14 @@ script: cargo test --all
 
 before_deploy: $TRAVIS_BUILD_DIR/.travis/before_deploy.sh
 deploy:
-  provider: releases
+- provider: pages
+  github-token: $GITHUB_TOKEN
+  local-dir: web/dist
+  on:
+    branch: master
+    condition: $TRAVIS_OS_NAME = linux && $TRAVIS_RUST_VERSION = nightly
+  skip-cleanup: true
+- provider: releases
   api_key: $GITHUB_TOKEN
   file: evaltrees-${TRAVIS_OS_NAME}.tar.gz
   on:
