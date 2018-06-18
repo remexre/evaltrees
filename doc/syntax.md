@@ -21,12 +21,13 @@ expr ::= name
       |  literal
       |  expr expr+
       |  expr binop expr
+	  |  'if' expr 'then' expr 'else' expr
       |  '(' expr ')'
       |  '[' expr (',' expr)* ']'
 
 binop ::= '+' | '-' | '*' | '/' | 'mod' | '::'
 
-literal ::= '[]' | digit+
+literal ::= '[]' | digit+ | 'true' | 'false'
 ```
 
 The actual grammar used is [here](../src/cst/parser/grammar.lalrpop).
