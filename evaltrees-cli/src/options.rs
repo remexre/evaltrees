@@ -40,7 +40,7 @@ impl Options {
             Some("name") => Ok(|decls| Box::new(CallByName::new(decls))),
             Some("value") | None => Ok(|decls| Box::new(CallByValue::new(decls))),
             Some(e) => bail!(
-                "Unknown evaluator `{}' (valid evaluators are `name' and `value')",
+                "Unknown evaluator `{}' (valid evaluators are `lazy', `name', and `value')",
                 e
             ),
         }

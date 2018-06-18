@@ -2,19 +2,21 @@ use std::io::Error as IoError;
 use std::mem::replace;
 
 use evaltrees::ast::{Decl, PrintStyle, Type};
-use evaltrees::eval::{CallByValue, Evaluator};
+use evaltrees::eval::Evaluator;
 use evaltrees::repl::ReplCommand;
 use evaltrees::typeck::typeck;
 use failure::Error;
 use linefeed::{reader::ReadResult, Interface, Terminal};
 use symbol::Symbol;
 
-pub fn run(mut decls: Vec<Decl<Type>>, mut print_style: PrintStyle) -> Result<(), Error> {
+pub fn run(
+    mut decls: Vec<Decl<Type>>,
+    mut print_style: PrintStyle,
+    mut make_evaluator: fn(Vec<Decl<()>>) -> Box<Evaluator>,
+) -> Result<(), Error> {
     let iface = Interface::new("evaltrees")?;
     iface.set_prompt("> ");
     print_decls(&iface, &decls, print_style)?;
-    let mut make_evaluator: fn(Vec<Decl<()>>) -> Box<Evaluator> =
-        |decls| Box::new(CallByValue::new(decls));
     loop {
         let line = match iface.read_line()? {
             ReadResult::Input(line) => line,

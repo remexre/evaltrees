@@ -89,6 +89,6 @@ fn run(options: Options) -> Result<(), Error> {
         let decls = typeck(vec![expr_decl], decls)?;
         plain::run(decls, &options)
     } else {
-        repl::run(decls, options.print_style())
+        repl::run(decls, options.print_style(), options.make_evaluator()?)
     }
 }
