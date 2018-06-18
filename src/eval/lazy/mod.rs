@@ -320,7 +320,9 @@ fn arg_normal_enough_for_pat<Aux>(
             arg_normal_enough_for_pat(&wherevars[n], pat, decls, wherevars)
         }
         (_, &Pattern::Binding(_, _)) => true,
-        (&LazyExpr::Literal(_, _), &Pattern::Literal(_, _)) => true,
+        (&LazyExpr::Literal(Literal::Int(_), _), &Pattern::Literal(Literal::Int(_), _)) => true,
+        (&LazyExpr::Literal(Literal::Nil, _), &Pattern::Literal(Literal::Nil, _)) => true,
+        (&LazyExpr::Op(Op::Cons, _, _, _), &Pattern::Literal(Literal::Nil, _)) => true,
         (_, &Pattern::Literal(_, _)) => false,
         (&LazyExpr::Op(Op::Cons, ref eh, ref et, _), &Pattern::Cons(ref ph, ref pt, _)) => {
             arg_normal_enough_for_pat(eh, ph, decls, wherevars)
