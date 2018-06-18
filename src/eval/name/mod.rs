@@ -141,7 +141,8 @@ fn arg_normal_enough_for_pat<Aux>(
 ) -> bool {
     match (value, pat) {
         (_, &Pattern::Binding(_, _)) => true,
-        (_, &Pattern::Literal(_, _)) => true,
+        (&Expr::Literal(_, _), &Pattern::Literal(_, _)) => true,
+        (_, &Pattern::Literal(_, _)) => false,
         (&Expr::Op(Op::Cons, ref eh, ref et, _), &Pattern::Cons(ref ph, ref pt, _)) => {
             arg_normal_enough_for_pat(eh, ph, decls) && arg_normal_enough_for_pat(et, pt, decls)
         }
