@@ -14,10 +14,10 @@ use std::collections::{BTreeSet, HashSet};
 use symbol::Symbol;
 
 use ast::{Decl, Type};
-use typeck::{constraint::Constraint,
-             subst::{SubstVar, Substitution},
-             ty::Ty,
-             util::{group, toposort, AnnotEnv}};
+use typeck::{
+    constraint::Constraint, subst::{SubstVar, Substitution}, ty::Ty,
+    util::{group, toposort, AnnotEnv},
+};
 
 /// An error during typechecking.
 #[derive(Clone, Debug, Fail, PartialEq)]
@@ -43,11 +43,15 @@ pub enum TypeError {
 }
 
 /// Completely type-checks a series of declarations.
+///
+/// We take a list of declarations to be checked, and a list of already-typed declarations. For a
+/// declaration to be treated as polymorphic, it must already have been typechecked, and assigned a
+/// polymorphic type.
 pub fn typeck(
     decls: Vec<Decl<()>>,
     mut checked: Vec<Decl<Type>>,
 ) -> Result<Vec<Decl<Type>>, TypeError> {
-    // Check for free variables.
+    // Check for free variables, erroring out if any are found.
     let mut freevars = decls
         .iter()
         .flat_map(|decl| decl.freevars())
@@ -64,7 +68,8 @@ pub fn typeck(
 
     // Sort the decls into sets.
     let known = checked.iter().map(|decl| decl.name).collect::<HashSet<_>>();
-    let decls = toposort(group(decls, |decl| decl.name), known, |decls| {
+    let decls = group(decls, |decl| decl.name);
+    let decls = toposort(decls, known, |decls| {
         let mut vars = BTreeSet::new();
         for decl in decls {
             vars.extend(decl.freevars());
@@ -80,6 +85,7 @@ pub fn typeck(
     Ok(checked)
 }
 
+/// Type-checks a single decl group; i.e. a series of decls which all have the same name.
 fn typeck_decls_with(
     decls: Vec<Decl<()>>,
     checked: &[Decl<Type>],
