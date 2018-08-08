@@ -12,6 +12,7 @@ extern crate lazy_static;
 extern crate linked_hash_set;
 #[macro_use]
 extern crate log;
+extern crate petgraph;
 extern crate regex;
 extern crate symbol;
 
