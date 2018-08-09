@@ -1,0 +1,5 @@
+even 0 = true;;
+even x = odd (x - 1);;
+
+odd 0 = false;;
+odd x = even (x - 1);;
