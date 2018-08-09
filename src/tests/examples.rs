@@ -8,7 +8,7 @@ use typeck::typeck;
 
 /// Creates a test for the given example(s).
 macro_rules! example_test {
-    (priv $name:ident) => {
+    (priv: $name:ident) => {
         {
             let cst = {
                 let mut f = File::open(concat!("examples/", stringify!($name), ".etl"))
@@ -25,9 +25,9 @@ macro_rules! example_test {
             typeck(ast, Vec::new()).expect("Failed to type-check decls")
         }
     };
-    (priv $name:ident ($expr:expr) $cbn:ident $cbv:ident $lazy:ident) => {
+    (priv: $name:ident, $expr:expr, $cbv:expr, $cbn:expr, $lazy:expr) => {
         {
-            let typed_ast = example_test!(priv $name);
+            let typed_ast = example_test!(priv: $name);
             let expr = $expr.parse::<CstExpr>()
                 .expect("Failed to parse expr")
                 .into_ast()
@@ -50,11 +50,11 @@ macro_rules! example_test {
             let mut lazy = LazyEvaluation::new(decls);
 
             cbv.set_print_style(PrintStyle::CST);
-            cbv.step_many(1000).expect("Evaluation error in CBV");
+            cbv.step_many(100).expect("Evaluation error in CBV");
             cbn.set_print_style(PrintStyle::CST);
-            cbn.step_many(1000).expect("Evaluation error in CBN");
+            cbn.step_many(100).expect("Evaluation error in CBN");
             lazy.set_print_style(PrintStyle::CST);
-            lazy.step_many(1000).expect("Evaluation error in Lazy");
+            lazy.step_many(100).expect("Evaluation error in Lazy");
     
             let cbv_str = cbv.to_string();
             let cbn_str = cbn.to_string();
@@ -64,42 +64,36 @@ macro_rules! example_test {
             let cbn = if cbn.normal_form() { Some(&cbn_str as &str) } else { None };
             let lazy = if lazy.normal_form() { Some(&lazy_str as &str) } else { None };
             
-            assert_eq!(cbv, $cbv);
-            assert_eq!(cbn, $cbn);
-            assert_eq!(lazy, $lazy);
+            assert_eq!(cbv, $cbv, "cbv");
+            assert_eq!(cbn, $cbn, "cbn");
+            assert_eq!(lazy, $lazy, "lazy");
         }
     };
-    ($(#[$attr:meta])* $name:ident ()) => {
+    (priv impl: $(#[$attr:meta])* $name:ident ()) => {
         $(#[$attr])*
         #[test]
         fn $name() {
-            example_test!(priv $name);
+            example_test!(priv: $name);
         }
     };
-    ($(#[$attr:meta])* $name:ident ($expr:expr, $expected:expr)) => {
+    (priv impl: $(#[$attr:meta])* $name:ident ($expr:expr, $expected:expr)) => {
         $(#[$attr])*
         #[test]
         fn $name() {
             let expected = Some($expected);
-            example_test!(priv $name ($expr) expected expected expected);
+            example_test!(priv: $name, $expr, expected, expected, expected);
         }
     };
-    ($(#[$attr:meta])* $name:ident ($expr:expr, $cbv:expr, $cbn:expr, $lazy:expr)) => {
+    (priv impl: $(#[$attr:meta])* $name:ident ($expr:expr, $cbv:expr, $cbn:expr, $lazy:expr)) => {
         $(#[$attr])*
         #[test]
         fn $name() {
-            example_test!(priv $name ($expr) $cbv $cbn $lazy);
+            example_test!(priv: $name, $expr, $cbv, $cbn, $lazy);
         }
     };
-    // Only handle the recursive case
-    /*
-    ($(#[$Attr:meta])* $Name:ident $Args:tt $(,)* $($(#[$attr:meta])* $name:ident $args:tt $(,)*)+) => {
-        example_test!($(#[$Attr])* $Name $Args);
-        $(example_test!($(#[$attr])* $name $args);)+
-    };
-    */
-    ($($(#[$attr:meta])* $name:ident $args:tt $(,)*)+) => {
-        $(example_test!($(#[$attr])* $name $args);)*
+    (,$($rest:tt)*) => { example_test!($($rest)*); };
+    ($($(#[$attr:meta])* $name:ident $args:tt ,)+) => {
+        $(example_test!(priv impl: $(#[$attr])* $name $args);)+
     };
 }
 
@@ -108,7 +102,7 @@ example_test! {
     double("double addOne 4", "6"),
     higher_order("map (plus 3) [1; 2; 3]", "4 :: 5 :: 6 :: []"),
     id("id id 137", "137"),
-    // infinite("take 2 ones", None, Some("[1; 1]"), Some("[1; 1]")),
+    infinite("take 2 ones", None, Some("1 :: 1 :: []"), Some("1 :: 1 :: []")),
     mutual("odd 5", "true"),
     need("triple 2 + double 3", "12"),
     #[should_panic]
