@@ -50,11 +50,11 @@ macro_rules! example_test {
             let mut lazy = LazyEvaluation::new(decls);
 
             cbv.set_print_style(PrintStyle::CST);
-            cbv.step_many(100).expect("Evaluation error in CBV");
+            cbv.step_many(32).expect("Evaluation error in CBV");
             cbn.set_print_style(PrintStyle::CST);
-            cbn.step_many(100).expect("Evaluation error in CBN");
+            cbn.step_many(32).expect("Evaluation error in CBN");
             lazy.set_print_style(PrintStyle::CST);
-            lazy.step_many(100).expect("Evaluation error in Lazy");
+            lazy.step_many(32).expect("Evaluation error in Lazy");
     
             let cbv_str = cbv.to_string();
             let cbn_str = cbn.to_string();
