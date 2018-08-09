@@ -201,7 +201,8 @@ impl<Aux> Expr<Aux> {
     /// Returns the free variables of an expression.
     pub fn freevars(&self) -> BTreeSet<Symbol> {
         match *self {
-            Expr::If(ref c, ref t, ref e, _) => c.freevars()
+            Expr::If(ref c, ref t, ref e, _) => c
+                .freevars()
                 .into_iter()
                 .chain(t.freevars())
                 .chain(e.freevars())

@@ -26,7 +26,7 @@ expr ::= name
       |  expr binop expr
 	  |  "if" expr "then" expr "else" expr
       |  "(" expr ")"
-      |  "[" expr ("," expr)* "]"
+      |  "[" expr (";" expr)* "]"
 
 binop ::= "+" | "-" | "*" | "/" | "mod" | "::"
 

@@ -15,8 +15,10 @@ use symbol::Symbol;
 
 use ast::{Decl, Type};
 use typeck::{
-    constraint::Constraint, subst::{SubstVar, Substitution}, ty::Ty,
-    util::{group, toposort, AnnotEnv},
+    constraint::Constraint,
+    subst::{SubstVar, Substitution},
+    ty::Ty,
+    util::{group, scc_decls, AnnotEnv},
 };
 
 /// An error during typechecking.
@@ -32,10 +34,6 @@ pub enum TypeError {
     /// during type-checking.
     #[fail(display = "Undefined variables: {:?}", _0)]
     Freevars(BTreeSet<Symbol>),
-
-    /// A mutually-recursive declaration was found. We don't currently support these.
-    #[fail(display = "Mutual recursion involving {}", _0)]
-    MutualRecursion(Symbol),
 
     /// The occurs check was failed (we've got an infinite type on our hands!).
     #[fail(display = "{} occurs within {} when solving {} ~ {}", _0, _1, _0, _1)]
@@ -66,16 +64,10 @@ pub fn typeck(
         return Err(TypeError::Freevars(freevars));
     }
 
-    // Sort the decls into sets.
+    // Split the decls into strongly connected components.
     let known = checked.iter().map(|decl| decl.name).collect::<HashSet<_>>();
     let decls = group(decls, |decl| decl.name);
-    let decls = toposort(decls, known, |decls| {
-        let mut vars = BTreeSet::new();
-        for decl in decls {
-            vars.extend(decl.freevars());
-        }
-        vars.into_iter().collect()
-    }).map_err(TypeError::MutualRecursion)?;
+    let decls = scc_decls(decls, &known);
 
     // Check each "level" of the decls.
     for decl in decls {
@@ -85,7 +77,8 @@ pub fn typeck(
     Ok(checked)
 }
 
-/// Type-checks a single decl group; i.e. a series of decls which all have the same name.
+/// Type-checks a series of decls that are at the same "stratification level," i.e. that form a
+/// strongly connected component.
 fn typeck_decls_with(
     decls: Vec<Decl<()>>,
     checked: &[Decl<Type>],
@@ -95,13 +88,19 @@ fn typeck_decls_with(
         return Ok(Vec::new());
     }
 
-    // First, create an environment containing the already-checked decls and use it to annotate
-    // the decls.
+    // First, create an environment containing the already-checked decls.
     let mut env = AnnotEnv::new();
     for decl in checked {
         env.put_poly(decl.name, decl.aux());
     }
-    env.put(decls[0].name, Ty::fresh());
+
+    // Add names for the decls in the component.
+    let names = decls.iter().map(|decl| decl.name).collect::<HashSet<_>>();
+    for name in names {
+        env.put(name, Ty::fresh());
+    }
+
+    // Use the annotation environment to annotate the decls.
     let mut decls = decls
         .into_iter()
         .map(|decl| decl.add_type_annotations(&mut env.clone()))
@@ -128,24 +127,23 @@ fn typeck_decls_with(
 
 /// Generates a substitution from a set of constraints.
 fn unify(constraints: BTreeSet<Constraint>) -> Result<Substitution, TypeError> {
-    // We go BTreeSet->Vec instead of working with Vecs all the way through to
-    // ensure uniqueness, and because it feels semantically closer to what we
-    // want anyway. The Vec is only here because there's no .remove_arbitrary()
-    // operation on sets.
+    // We go BTreeSet->Vec instead of working with Vecs all the way through to ensure uniqueness of
+    // constraints, and because it feels semantically closer to what we want anyway. The Vec is
+    // only here because there's no .remove_arbitrary() operation on sets.
     let mut constraints = constraints.into_iter().collect::<Vec<_>>();
 
     let mut subst = Substitution::new();
     while let Some(Constraint(s, t)) = constraints.pop() {
         debug!("Applying constraint {} ~ {}...", s, t);
         if s == t {
-            // Yay, nothing to do.
+            // Yay, nothing to do; the constraint is e.g. Int ~ Int.
         } else {
             match (s, t) {
                 (Ty::Var(x), t) => {
                     if t.freevars().contains(&x) {
                         return Err(TypeError::Occurs(x, t));
                     }
-                    for &mut Constraint(ref mut cs, ref mut ct) in &mut constraints {
+                    for Constraint(cs, ct) in &mut constraints {
                         cs.sub(x, &t);
                         ct.sub(x, &t);
                     }
@@ -155,7 +153,7 @@ fn unify(constraints: BTreeSet<Constraint>) -> Result<Substitution, TypeError> {
                     if s.freevars().contains(&x) {
                         return Err(TypeError::Occurs(x, s));
                     }
-                    for &mut Constraint(ref mut cs, ref mut ct) in &mut constraints {
+                    for Constraint(cs, ct) in &mut constraints {
                         cs.sub(x, &s);
                         ct.sub(x, &s);
                     }

@@ -13,6 +13,9 @@ extern crate linked_hash_set;
 #[macro_use]
 extern crate log;
 extern crate petgraph;
+#[cfg(test)]
+#[macro_use]
+extern crate pretty_assertions;
 extern crate regex;
 extern crate symbol;
 
@@ -21,3 +24,6 @@ pub mod cst;
 pub mod eval;
 pub mod repl;
 pub mod typeck;
+
+#[cfg(test)]
+mod tests;
