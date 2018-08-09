@@ -16,13 +16,11 @@ See `doc/syntax.md` for a description of the language's syntax.
 
 (These are features that will probably not be implemented (although PRs are welcome))
 
- - Mutual Recursion
-   - Currently, this breaks typechecking
  - Polymorphic Recursion
    - This makes type inference undecidable
  - Higher-rank Polymorphism
-   - The reification procedure for types assumes rank-1 polymorphism
    - This makes type inference undecidable
+   - The current reification procedure for types assumes rank-1 polymorphism
 
 ## License
 

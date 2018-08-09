@@ -1,3 +1,5 @@
+plus x y = x + y;;
+
 map f [] = [];;
 map f (h::t) = f h :: map f t;;
 

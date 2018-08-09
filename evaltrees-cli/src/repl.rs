@@ -15,7 +15,7 @@ pub fn run(
     mut make_evaluator: fn(Vec<Decl<()>>) -> Box<Evaluator>,
 ) -> Result<(), Error> {
     let iface = Interface::new("evaltrees")?;
-    iface.set_prompt("> ");
+    iface.set_prompt("> ")?;
     print_decls(&iface, &decls, print_style)?;
     loop {
         let line = match iface.read_line()? {

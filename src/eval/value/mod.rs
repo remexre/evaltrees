@@ -1,11 +1,15 @@
+mod apply;
 #[cfg(test)]
 mod tests;
 
 use failure::Error;
 
 use ast::{Decl, Expr, Literal, Op, PrintStyle};
-use eval::util::{apply, beta_number, reducible};
-use eval::Evaluator;
+use eval::{
+    util::{beta_number, reducible},
+    value::apply::apply,
+    Evaluator,
+};
 
 /// Call-by-value evaluation.
 #[derive(Debug, DisplayAttr)]

@@ -1,1 +1,3 @@
-double f x = f (f x)
+addOne x = x + 1;;
+
+double f x = f (f x);;

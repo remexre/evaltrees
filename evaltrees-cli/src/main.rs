@@ -35,11 +35,11 @@ fn main() {
 
     if let Err(err) = run(options) {
         let mut first = true;
-        let num_errs = err.causes().count();
+        let num_errs = err.iter_chain().count();
         if num_errs <= 1 {
             error!("{}", err);
         } else {
-            for cause in err.causes() {
+            for cause in err.iter_chain() {
                 if first {
                     first = false;
                     error!("           {}", cause);
