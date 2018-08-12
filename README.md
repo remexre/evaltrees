@@ -12,7 +12,7 @@ See `doc/README.md` for a description of the language's syntax.
 Demo
 ----
 
-[![asciicast](https://asciinema.org/a/186990.png)](https://asciinema.org/a/186990)
+[![asciicast](https://raw.githubusercontent.com/remexre/evaltrees/master/doc/demo.gif)](https://asciinema.org/a/186990)
 
 Missing Features
 ----------------
