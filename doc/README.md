@@ -1,13 +1,15 @@
-# Documentation
+Documentation
+=============
 
-## API
+API
+---
 
 See [docs.rs](https://docs.rs/evaltrees).
 
-## Syntax
+Syntax
+------
 
-Evaltrees accepts a series of declarations, as well as an expression to evaluate.
-Their syntax is described informally as follows (All operator precedences and associativities follow the OCaml rules):
+Evaltrees accepts a series of declarations, as well as an expression to evaluate. Their syntax is described informally as follows (All operator precedences and associativities follow the OCaml rules):
 
 ```plain
 decls ::= (decl ";;")*
