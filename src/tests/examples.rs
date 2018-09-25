@@ -55,7 +55,7 @@ macro_rules! example_test {
             cbn.step_many(32).expect("Evaluation error in CBN");
             lazy.set_print_style(PrintStyle::CST);
             lazy.step_many(32).expect("Evaluation error in Lazy");
-    
+
             let cbv_str = cbv.to_string();
             let cbn_str = cbn.to_string();
             let lazy_str = lazy.to_string();
@@ -63,7 +63,7 @@ macro_rules! example_test {
             let cbv = if cbv.normal_form() { Some(&cbv_str as &str) } else { None };
             let cbn = if cbn.normal_form() { Some(&cbn_str as &str) } else { None };
             let lazy = if lazy.normal_form() { Some(&lazy_str as &str) } else { None };
-            
+
             assert_eq!(cbv, $cbv, "cbv");
             assert_eq!(cbn, $cbn, "cbn");
             assert_eq!(lazy, $lazy, "lazy");
@@ -99,7 +99,7 @@ macro_rules! example_test {
 
 example_test! {
     and("andl [true; true; false; true]", "false"),
-    double("double addOne 4", "6"),
+    double("doubleApp double 4", "16"),
     higher_order("map (plus 3) [1; 2; 3]", "4 :: 5 :: 6 :: []"),
     id("id id 137", "137"),
     infinite("take 2 ones", None, Some("1 :: 1 :: []"), Some("1 :: 1 :: []")),
@@ -108,6 +108,7 @@ example_test! {
     #[should_panic]
     occurs_error(),
     poly("(I 40) + (S K K 2)", "42"),
+    tail_recursion("(sum [1; 2; 3]) + (sumTR [4; 5; 6])", "21"),
     #[should_panic(expected = "Failed to type-check decls: CantUnify(Int, List(Int))")]
     type_error(),
 }

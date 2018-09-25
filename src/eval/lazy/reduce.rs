@@ -8,7 +8,8 @@ pub fn reducible(expr: &LazyExpr, decls: &[Decl<()>]) -> bool {
         LazyExpr::If(_, _, _) => true,
         LazyExpr::Literal(_) => false,
         LazyExpr::Op(Op::App, ref l, ref r) => {
-            reducible(l, decls) || reducible(r, decls)
+            reducible(l, decls)
+                || reducible(r, decls)
                 || beta_number(expr, decls).map(|n| n == 0).unwrap_or(false)
         }
         LazyExpr::Op(Op::Cons, ref l, ref r) => reducible(l, decls) || reducible(r, decls),

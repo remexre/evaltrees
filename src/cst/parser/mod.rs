@@ -1,6 +1,8 @@
 #[cfg_attr(feature = "cargo-clippy", allow(clippy))]
 #[cfg_attr(rustfmt, rustfmt_skip)]
-mod grammar;
+mod grammar {
+    include!(concat!(env!("OUT_DIR"), "/cst/parser/grammar.rs"));
+}
 #[cfg(test)]
 mod tests;
 

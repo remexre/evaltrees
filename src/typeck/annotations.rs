@@ -4,7 +4,8 @@ use typeck::{ty::Ty, util::AnnotEnv};
 impl Decl<()> {
     pub(in typeck) fn add_type_annotations(self, env: &mut AnnotEnv) -> Decl<Ty> {
         let ty = env.get(self.name);
-        let args = self.args
+        let args = self
+            .args
             .into_iter()
             .map(|a| a.add_type_annotations(env))
             .collect();

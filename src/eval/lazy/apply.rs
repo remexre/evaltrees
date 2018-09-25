@@ -15,7 +15,8 @@ pub fn try_apply(
 ) -> Result<(LazyExpr, Option<(usize, LazyExpr)>), Error> {
     for decl in decls.iter().filter(|decl| decl.name == func) {
         assert_eq!(args.len(), decl.args.len());
-        if let Some(i) = args.iter()
+        if let Some(i) = args
+            .iter()
             .zip(&decl.args)
             .position(|(a, p)| !arg_normal_enough_for_pat(a, p, decls, wherevars))
         {
@@ -44,7 +45,8 @@ fn apply_to(
     mut bindings: BTreeMap<Symbol, LazyExpr>,
     wherevars: &mut Vec<LazyExpr>,
 ) -> LazyExpr {
-    let argvars = decl.args
+    let argvars = decl
+        .args
         .iter()
         .map(|pat| pat.freevars())
         .fold(BTreeSet::new(), |mut a, b| {

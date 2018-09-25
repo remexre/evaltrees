@@ -1,3 +1,5 @@
 addOne x = x + 1;;
 
-double f x = f (f x);;
+doubleApp f x = f (f x);;
+
+double x = x + x;;

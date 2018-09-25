@@ -10,7 +10,8 @@ use eval::{name::step, util::reducible};
 pub fn try_apply(func: Symbol, args: Vec<Expr<()>>, decls: &[Decl<()>]) -> Result<Expr<()>, Error> {
     for decl in decls.iter().filter(|decl| decl.name == func) {
         assert_eq!(args.len(), decl.args.len());
-        if let Some(i) = args.iter()
+        if let Some(i) = args
+            .iter()
             .zip(&decl.args)
             .position(|(a, p)| !arg_normal_enough_for_pat(a, p, decls))
         {

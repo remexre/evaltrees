@@ -10,11 +10,15 @@ use std::mem::replace;
 use failure::Error;
 
 use ast::{Decl, Literal, Op, PrintStyle};
-use eval::{lazy::{apply::try_apply,
-                  expr::LazyExpr,
-                  reduce::{beta_number, reducible}},
-           util::transitive_closure,
-           Evaluator};
+use eval::{
+    lazy::{
+        apply::try_apply,
+        expr::LazyExpr,
+        reduce::{beta_number, reducible},
+    },
+    util::transitive_closure,
+    Evaluator,
+};
 
 /// Lazy evaluation.
 #[derive(Debug)]

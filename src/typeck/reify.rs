@@ -20,7 +20,8 @@ impl Decl<Ty> {
             ty = Type::Forall(Box::new(ty));
         }
 
-        let args = self.args
+        let args = self
+            .args
             .into_iter()
             .map(|arg| arg.reify_in(&env))
             .collect();
