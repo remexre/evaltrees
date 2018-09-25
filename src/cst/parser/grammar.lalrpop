@@ -88,7 +88,7 @@ Literal: Literal = {
     <s: r"[0-9]+"> => Literal::Int(s.parse().unwrap()),
 };
 
-Name: Symbol = <name: r"[a-zA-Z_][0-9a-zA-Z_]*"> => {
+Name: Symbol = <name: r"[a-zA-Z_][0-9a-zA-Z_']*"> => {
     if name == "_" {
         warn!("_ is a valid variable name, not the wildcard pattern");
         warn!("Instead, prefer _0, _1, etc.");

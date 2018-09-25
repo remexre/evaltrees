@@ -1,0 +1,7 @@
+sum [] = 0;;
+sum (h :: t) = h + sum t;;
+
+sumTR = sumTRHelper 0;;
+
+sumTRHelper x [] = x;;
+sumTRHelper y (h :: t) = sumTRHelper (y + h) t;;
