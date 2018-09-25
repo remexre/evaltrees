@@ -115,7 +115,7 @@ fn repl_one<T: Terminal>(
                 }],
                 decls.clone(),
             )?;
-            let decl = decls.iter().find(|decl| decl.name == "".into()).unwrap();
+            let decl = decls.iter().find(|decl| decl.name == "").unwrap();
             writeln!(
                 iface,
                 "{} : {}",
