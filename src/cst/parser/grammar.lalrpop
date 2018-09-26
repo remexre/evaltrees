@@ -14,6 +14,7 @@ pub ReplCommand: ReplCommand = {
 	":cbv" => ReplCommand::Evaluator(|decls| Box::new(CallByValue::new(decls))),
 	":cst" => ReplCommand::PrintStyle(PrintStyle::CST),
 	":decl" <d: Decl> ";;"? => ReplCommand::Decl(d),
+	":h" => ReplCommand::Help,
 	":help" => ReplCommand::Help,
 	":l" => ReplCommand::List,
 	":lazy" => ReplCommand::Evaluator(|decls| Box::new(LazyEvaluation::new(decls))),
