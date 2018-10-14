@@ -18,9 +18,9 @@ clippy:
 doc:
 	cargo doc --all
 run +ARGS="":
-	cargo run -- {{ARGS}}
+	cargo run --manifest-path evaltrees-cli/Cargo.toml -- {{ARGS}}
 run-release +ARGS="":
-	cargo run --release -- {{ARGS}}
+	cargo run --manifest-path evaltrees-cli/Cargo.toml --release -- {{ARGS}}
 test:
 	cargo test --all
 

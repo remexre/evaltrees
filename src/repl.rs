@@ -40,8 +40,7 @@ impl ReplCommand {
     pub fn help() -> &'static str {
         r"<expr>              Evaluates an expression
 :decl <decl>        Adds a declaration
-:l                  Lists all declarations
-:list               Lists all declarations
+:list               Lists all declarations (also :l)
 :t <expr>           Prints the type of an expression
 
 :cbn                Switches to call-by-name evaluation
@@ -51,9 +50,8 @@ impl ReplCommand {
 :ast                Switches to AST print style
 :cst                Switches to CST print style
 
-:help               Prints this help message
-:q                  Quits the REPL
-:quit               Quits the REPL
+:help               Prints this help message (also :h)
+:quit               Quits the REPL (also :q)
 :reset              Removes all decls from the REPL"
     }
 }
