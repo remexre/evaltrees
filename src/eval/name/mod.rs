@@ -2,7 +2,7 @@ mod apply;
 #[cfg(test)]
 mod tests;
 
-use failure::Error;
+use failure::{err_msg, Error};
 
 use ast::{Decl, Expr, Literal, Op, PrintStyle};
 use eval::util::{beta_number, reducible};
@@ -72,16 +72,30 @@ fn step(expr: Expr<()>, decls: &[Decl<()>]) -> Result<Expr<()>, Error> {
             }
             _ => Expr::Op(Op::App, Box::new(step(*l, decls)?), r, ()),
         },
-        Expr::Op(Op::Cons, l, r, ()) => if reducible(&l, decls) {
-            Expr::Op(Op::Cons, Box::new(step(*l, decls)?), r, ())
-        } else {
-            Expr::Op(Op::Cons, l, Box::new(step(*r, decls)?), ())
-        },
+        Expr::Op(Op::Cons, l, r, ()) => {
+            if reducible(&l, decls) {
+                Expr::Op(Op::Cons, Box::new(step(*l, decls)?), r, ())
+            } else {
+                Expr::Op(Op::Cons, l, Box::new(step(*r, decls)?), ())
+            }
+        }
         Expr::Op(Op::Add, l, r, ()) => math_op(Op::Add, l, r, decls, |l, r| Ok(l + r))?,
         Expr::Op(Op::Sub, l, r, ()) => math_op(Op::Sub, l, r, decls, |l, r| Ok(l - r))?,
         Expr::Op(Op::Mul, l, r, ()) => math_op(Op::Mul, l, r, decls, |l, r| Ok(l * r))?,
-        Expr::Op(Op::Div, l, r, ()) => math_op(Op::Div, l, r, decls, |l, r| Ok(l / r))?,
-        Expr::Op(Op::Mod, l, r, ()) => math_op(Op::Mod, l, r, decls, |l, r| Ok(l % r))?,
+        Expr::Op(Op::Div, l, r, ()) => math_op(Op::Div, l, r, decls, |l, r| {
+            if r == 0 {
+                Err(err_msg("division by zero"))
+            } else {
+                Ok(l / r)
+            }
+        })?,
+        Expr::Op(Op::Mod, l, r, ()) => math_op(Op::Mod, l, r, decls, |l, r| {
+            if r == 0 {
+                Err(err_msg("mod by zero"))
+            } else {
+                Ok(l % r)
+            }
+        })?,
         Expr::Variable(var, ()) => {
             let decl = decls
                 .iter()

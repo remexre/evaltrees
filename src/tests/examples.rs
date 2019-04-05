@@ -6,6 +6,29 @@ use cst::{parse_decls, Expr as CstExpr};
 use eval::{CallByName, CallByValue, Evaluator, LazyEvaluation};
 use typeck::typeck;
 
+/// The "harness" for testing an evaluator.
+pub fn test_evaluator<E: Evaluator>(
+    mut evaluator: E,
+    expected: Option<Result<&str, &str>>,
+    name: &str,
+) {
+    evaluator.set_print_style(PrintStyle::CST);
+    match evaluator.step_many(32) {
+        Ok(()) => {
+            if evaluator.normal_form() {
+                let s = evaluator.to_string();
+                assert_eq!(Some(Ok(&s as &str)), expected, "{}", name);
+            } else {
+                assert_eq!(None, expected, "{}", name);
+            }
+        }
+        Err(e) => {
+            let e = e.to_string();
+            assert_eq!(Some(Err(&e as &str)), expected, "{}", name);
+        }
+    }
+}
+
 /// Creates a test for the given example(s).
 macro_rules! example_test {
     (priv: $name:ident) => {
@@ -45,28 +68,9 @@ macro_rules! example_test {
                 .map(|decl| decl.map_aux(|_| ()))
                 .collect::<Vec<_>>();
 
-            let mut cbv = CallByValue::new(decls.clone());
-            let mut cbn = CallByName::new(decls.clone());
-            let mut lazy = LazyEvaluation::new(decls);
-
-            cbv.set_print_style(PrintStyle::CST);
-            cbv.step_many(32).expect("Evaluation error in CBV");
-            cbn.set_print_style(PrintStyle::CST);
-            cbn.step_many(32).expect("Evaluation error in CBN");
-            lazy.set_print_style(PrintStyle::CST);
-            lazy.step_many(32).expect("Evaluation error in Lazy");
-
-            let cbv_str = cbv.to_string();
-            let cbn_str = cbn.to_string();
-            let lazy_str = lazy.to_string();
-
-            let cbv = if cbv.normal_form() { Some(&cbv_str as &str) } else { None };
-            let cbn = if cbn.normal_form() { Some(&cbn_str as &str) } else { None };
-            let lazy = if lazy.normal_form() { Some(&lazy_str as &str) } else { None };
-
-            assert_eq!(cbv, $cbv, "cbv");
-            assert_eq!(cbn, $cbn, "cbn");
-            assert_eq!(lazy, $lazy, "lazy");
+            test_evaluator(CallByValue::new(decls.clone()), $cbv, concat!(stringify!(name), " cbv"));
+            test_evaluator(CallByName::new(decls.clone()), $cbn, concat!(stringify!(name), " cbn"));
+            test_evaluator(LazyEvaluation::new(decls), $lazy, concat!(stringify!(name), " lazy"));
         }
     };
     (priv impl: $(#[$attr:meta])* $name:ident ()) => {
@@ -80,7 +84,7 @@ macro_rules! example_test {
         $(#[$attr])*
         #[test]
         fn $name() {
-            let expected = Some($expected);
+            let expected = Some(Ok($expected));
             example_test!(priv: $name, $expr, expected, expected, expected);
         }
     };
@@ -99,10 +103,11 @@ macro_rules! example_test {
 
 example_test! {
     and("andl [true; true; false; true]", "false"),
+    div0("const 1 div0", Some(Err("division by zero")), Some(Ok("1")), Some(Ok("1"))),
     double("doubleApp double 4", "16"),
     higher_order("map (plus 3) [1; 2; 3]", "4 :: 5 :: 6 :: []"),
     id("id id 137", "137"),
-    infinite("take 2 ones", None, Some("1 :: 1 :: []"), Some("1 :: 1 :: []")),
+    infinite("take 2 ones", None, Some(Ok("1 :: 1 :: []")), Some(Ok("1 :: 1 :: []"))),
     mutual("odd 5", "true"),
     need("triple 2 + double 3", "12"),
     #[should_panic]

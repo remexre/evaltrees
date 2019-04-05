@@ -7,7 +7,7 @@ mod tests;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::mem::replace;
 
-use failure::Error;
+use failure::{err_msg, Error};
 
 use ast::{Decl, Literal, Op, PrintStyle};
 use eval::{
@@ -49,10 +49,13 @@ impl Display for LazyEvaluation {
             "{}",
             self.expr.as_ref().unwrap().display_as(self.print_style)
         )?;
+
         let iter = transitive_closure(self.expr.as_ref().unwrap().where_vars_indices(), |&num| {
             self.wherevars[num].where_vars_indices()
-        }).into_iter()
-            .map(|num| (num, &self.wherevars[num]));
+        })
+        .into_iter()
+        .map(|num| (num, &self.wherevars[num]));
+
         let mut first = true;
         for (n, expr) in iter {
             if first {
@@ -129,18 +132,46 @@ fn step(
                 (LazyExpr::Op(Op::App, Box::new(l), r), replacement)
             }
         },
-        LazyExpr::Op(Op::Cons, l, r) => if reducible(&l, decls) {
-            let (l, replacement) = step(*l, decls, wherevars)?;
-            (LazyExpr::Op(Op::Cons, Box::new(l), r), replacement)
-        } else {
-            let (r, replacement) = step(*r, decls, wherevars)?;
-            (LazyExpr::Op(Op::Cons, l, Box::new(r)), replacement)
-        },
+        LazyExpr::Op(Op::Cons, l, r) => {
+            if reducible(&l, decls) {
+                let (l, replacement) = step(*l, decls, wherevars)?;
+                (LazyExpr::Op(Op::Cons, Box::new(l), r), replacement)
+            } else {
+                let (r, replacement) = step(*r, decls, wherevars)?;
+                (LazyExpr::Op(Op::Cons, l, Box::new(r)), replacement)
+            }
+        }
         LazyExpr::Op(Op::Add, l, r) => math_op(Op::Add, l, r, decls, |l, r| Ok(l + r), wherevars)?,
         LazyExpr::Op(Op::Sub, l, r) => math_op(Op::Sub, l, r, decls, |l, r| Ok(l - r), wherevars)?,
         LazyExpr::Op(Op::Mul, l, r) => math_op(Op::Mul, l, r, decls, |l, r| Ok(l * r), wherevars)?,
-        LazyExpr::Op(Op::Div, l, r) => math_op(Op::Div, l, r, decls, |l, r| Ok(l / r), wherevars)?,
-        LazyExpr::Op(Op::Mod, l, r) => math_op(Op::Mod, l, r, decls, |l, r| Ok(l % r), wherevars)?,
+        LazyExpr::Op(Op::Div, l, r) => math_op(
+            Op::Div,
+            l,
+            r,
+            decls,
+            |l, r| {
+                if r == 0 {
+                    Err(err_msg("division by zero"))
+                } else {
+                    Ok(l / r)
+                }
+            },
+            wherevars,
+        )?,
+        LazyExpr::Op(Op::Mod, l, r) => math_op(
+            Op::Mod,
+            l,
+            r,
+            decls,
+            |l, r| {
+                if r == 0 {
+                    Err(err_msg("mod by zero"))
+                } else {
+                    Ok(l / r)
+                }
+            },
+            wherevars,
+        )?,
         LazyExpr::Variable(var) => {
             let decl = decls
                 .iter()
