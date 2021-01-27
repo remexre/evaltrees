@@ -9,10 +9,10 @@ use std::fmt::Display;
 
 use failure::Error;
 
-use ast::PrintStyle;
-pub use eval::lazy::LazyEvaluation;
-pub use eval::name::CallByName;
-pub use eval::value::CallByValue;
+use crate::ast::PrintStyle;
+pub use crate::eval::lazy::LazyEvaluation;
+pub use crate::eval::name::CallByName;
+pub use crate::eval::value::CallByValue;
 
 // TODO: Should there be proptest/quickcheck tests for progress/preservation properties?
 // What about confluence?

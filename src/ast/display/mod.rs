@@ -5,7 +5,7 @@ mod type_;
 
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
-use ast::Decl;
+use crate::ast::Decl;
 
 impl<Aux> Display for Decl<Aux> {
     fn fmt(&self, fmt: &mut Formatter) -> FmtResult {

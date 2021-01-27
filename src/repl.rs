@@ -1,8 +1,8 @@
 //! Utilities for implementing a REPL.
 
-use ast::{Decl, PrintStyle};
-use cst::{Decl as CstDecl, Expr};
-use eval::Evaluator;
+use crate::ast::{Decl, PrintStyle};
+use crate::cst::{Decl as CstDecl, Expr};
+use crate::eval::Evaluator;
 
 /// A command entered at the REPL.
 #[derive(Clone, Debug, PartialEq)]
@@ -11,7 +11,7 @@ pub enum ReplCommand {
     Decl(CstDecl),
 
     /// Sets the function used to construct an evaluator.
-    Evaluator(fn(Vec<Decl<()>>) -> Box<Evaluator>),
+    Evaluator(fn(Vec<Decl<()>>) -> Box<dyn Evaluator>),
 
     /// Evaluates an expression.
     Expr(Expr),

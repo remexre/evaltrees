@@ -2,8 +2,8 @@ use std::collections::BTreeSet;
 
 use symbol::Symbol;
 
-use ast::{Decl, Expr, Literal, Op, Pattern};
-use cst::{Decl as CstDecl, Expr as CstExpr};
+use crate::ast::{Decl, Expr, Literal, Op, Pattern};
+use crate::cst::{Decl as CstDecl, Expr as CstExpr};
 
 /// An error converting a concrete syntax tree to an abstract syntax tree.
 /// These, generally, are errors which are valid syntax but have ill-defined

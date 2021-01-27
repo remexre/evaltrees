@@ -1,5 +1,5 @@
-use ast::{Literal, Op};
-use cst::Expr;
+use crate::ast::{Literal, Op};
+use crate::cst::Expr;
 
 #[test]
 fn call() {

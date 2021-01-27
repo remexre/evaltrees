@@ -1,5 +1,5 @@
-use ast::{Decl, Expr, Literal, Op, Pattern, Type};
-use typeck::typeck;
+use crate::ast::{Decl, Expr, Literal, Op, Pattern, Type};
+use crate::typeck::typeck;
 
 #[test]
 fn map_map() {

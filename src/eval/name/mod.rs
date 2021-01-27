@@ -4,9 +4,9 @@ mod tests;
 
 use failure::{err_msg, Error};
 
-use ast::{Decl, Expr, Literal, Op, PrintStyle};
-use eval::util::{beta_number, reducible};
-use eval::{name::apply::try_apply, Evaluator};
+use crate::ast::{Decl, Expr, Literal, Op, PrintStyle};
+use crate::eval::util::{beta_number, reducible};
+use crate::eval::{name::apply::try_apply, Evaluator};
 
 /// Call-by-name evaluation.
 #[derive(Debug, DisplayAttr)]

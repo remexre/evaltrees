@@ -1,8 +1,8 @@
-use ast::{Decl, Expr, Pattern};
-use typeck::{ty::Ty, util::AnnotEnv};
+use crate::ast::{Decl, Expr, Pattern};
+use crate::typeck::{ty::Ty, util::AnnotEnv};
 
 impl Decl<()> {
-    pub(in typeck) fn add_type_annotations(self, env: &mut AnnotEnv) -> Decl<Ty> {
+    pub(in crate::typeck) fn add_type_annotations(self, env: &mut AnnotEnv) -> Decl<Ty> {
         let ty = env.get(self.name);
         let args = self
             .args
@@ -20,7 +20,7 @@ impl Decl<()> {
 }
 
 impl Expr<()> {
-    pub(in typeck) fn add_type_annotations(self, env: &mut AnnotEnv) -> Expr<Ty> {
+    pub(in crate::typeck) fn add_type_annotations(self, env: &mut AnnotEnv) -> Expr<Ty> {
         match self {
             Expr::If(c, t, e, ()) => Expr::If(
                 Box::new(c.add_type_annotations(env)),

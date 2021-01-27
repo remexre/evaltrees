@@ -3,8 +3,8 @@ use std::collections::{BTreeMap, BTreeSet};
 use failure::Error;
 use symbol::Symbol;
 
-use ast::{Decl, Expr, Literal, Op, Pattern};
-use eval::lazy::{expr::LazyExpr, reduce::reducible, step};
+use crate::ast::{Decl, Expr, Literal, Op, Pattern};
+use crate::eval::lazy::{expr::LazyExpr, reduce::reducible, step};
 
 /// Performs function application if possible, or reduces one of the arguments if not.
 pub fn try_apply(

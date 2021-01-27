@@ -2,7 +2,7 @@ use evaltrees::ast::{Decl, PrintStyle, Type};
 use failure::Error;
 use symbol::Symbol;
 
-use options::Options;
+use crate::options::Options;
 
 pub fn run(mut decls: Vec<Decl<Type>>, options: &Options) -> Result<(), Error> {
     decls.sort_by_key(|decl| decl.name);

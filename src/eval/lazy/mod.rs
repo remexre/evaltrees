@@ -9,8 +9,8 @@ use std::mem::replace;
 
 use failure::{err_msg, Error};
 
-use ast::{Decl, Literal, Op, PrintStyle};
-use eval::{
+use crate::ast::{Decl, Literal, Op, PrintStyle};
+use crate::eval::{
     lazy::{
         apply::try_apply,
         expr::LazyExpr,

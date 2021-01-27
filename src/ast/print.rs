@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
-use ast::{Decl, Expr};
+use crate::ast::{Decl, Expr};
 
 /// The style of printing to `Display` with.
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]

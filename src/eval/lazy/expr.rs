@@ -1,8 +1,8 @@
 use std::collections::HashSet;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
-use ast::{Expr, Literal, Op, PrintStyle};
-use cst::Expr as CstExpr;
+use crate::ast::{Expr, Literal, Op, PrintStyle};
+use crate::cst::Expr as CstExpr;
 use symbol::Symbol;
 
 /// An expression type used only in lazy evaluation, to add the where-bound variables.

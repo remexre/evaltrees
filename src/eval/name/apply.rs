@@ -3,8 +3,8 @@ use std::collections::BTreeMap;
 use failure::Error;
 use symbol::Symbol;
 
-use ast::{Decl, Expr, Literal, Op, Pattern};
-use eval::{name::step, util::reducible};
+use crate::ast::{Decl, Expr, Literal, Op, Pattern};
+use crate::eval::{name::step, util::reducible};
 
 /// Performs function application if possible, or reduces one of the arguments if not.
 pub fn try_apply(func: Symbol, args: Vec<Expr<()>>, decls: &[Decl<()>]) -> Result<Expr<()>, Error> {

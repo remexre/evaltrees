@@ -1,13 +1,13 @@
 use linked_hash_set::LinkedHashSet;
 
-use ast::{Decl, Expr, Pattern, Type};
-use typeck::{subst::SubstVar, ty::Ty, util::UnreifyEnv};
+use crate::ast::{Decl, Expr, Pattern, Type};
+use crate::typeck::{subst::SubstVar, ty::Ty, util::UnreifyEnv};
 
 // TODO: This reification is unsound in the presence of higher rank polymorphism.
 
 impl Decl<Ty> {
     /// Reifies a declaration.
-    pub(in typeck) fn reify(self) -> Decl<Type> {
+    pub(in crate::typeck) fn reify(self) -> Decl<Type> {
         let mut vars = LinkedHashSet::new();
         for arg in &self.args {
             arg.collect_vars(&mut vars);
@@ -136,7 +136,7 @@ impl Ty {
 }
 
 impl Type {
-    pub(in typeck) fn unreify(&self) -> Ty {
+    pub(in crate::typeck) fn unreify(&self) -> Ty {
         fn helper(mut ty: &Type, mut env: UnreifyEnv) -> Ty {
             // First, peel off any Foralls.
             while let Type::Forall(ref t) = *ty {

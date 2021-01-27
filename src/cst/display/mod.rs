@@ -3,8 +3,8 @@ mod tests;
 
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
-use ast::Op;
-use cst::{Decl, Expr};
+use crate::ast::Op;
+use crate::cst::{Decl, Expr};
 
 impl Display for Decl {
     fn fmt(&self, fmt: &mut Formatter) -> FmtResult {

@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use failure::Error;
 use symbol::Symbol;
 
-use ast::{Decl, Expr, Pattern};
+use crate::ast::{Decl, Expr, Pattern};
 
 /// Performs "normal" (for call-by-name and call-by-value) function application.
 pub fn apply<Aux: Clone>(

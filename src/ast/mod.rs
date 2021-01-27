@@ -8,7 +8,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use symbol::Symbol;
 
-pub use ast::print::PrintStyle;
+pub use crate::ast::print::PrintStyle;
 
 /// A function or value declaration.
 #[derive(Clone, Debug, PartialEq)]

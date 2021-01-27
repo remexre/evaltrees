@@ -1,6 +1,6 @@
 use std::collections::BTreeSet;
 
-use typeck::subst::SubstVar;
+use crate::typeck::subst::SubstVar;
 
 /// A partial type, used in substitutions.
 #[derive(Clone, Debug, DisplayAttr, Eq, PartialEq, Ord, PartialOrd)]

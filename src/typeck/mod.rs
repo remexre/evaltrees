@@ -13,8 +13,8 @@ use std::collections::{BTreeSet, HashSet};
 
 use symbol::Symbol;
 
-use ast::{Decl, Type};
-use typeck::{
+use crate::ast::{Decl, Type};
+use crate::typeck::{
     constraint::Constraint,
     subst::{SubstVar, Substitution},
     ty::Ty,

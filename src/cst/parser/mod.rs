@@ -10,9 +10,9 @@ use std::str::FromStr;
 
 use lalrpop_util::ParseError;
 
-use cst::parser::grammar::Token;
-use cst::{Decl, Expr};
-use repl::ReplCommand;
+use crate::cst::parser::grammar::Token;
+use crate::cst::{Decl, Expr};
+use crate::repl::ReplCommand;
 
 impl FromStr for Decl {
     type Err = ParseError<usize, String, &'static str>;

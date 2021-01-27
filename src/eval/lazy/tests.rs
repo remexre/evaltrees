@@ -1,5 +1,5 @@
 use super::*;
-use ast::{Expr, Pattern};
+use crate::ast::{Expr, Pattern};
 
 #[test]
 fn app() {

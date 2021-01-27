@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use ast::{Decl, Expr, Pattern};
-use typeck::ty::Ty;
+use crate::ast::{Decl, Expr, Pattern};
+use crate::typeck::ty::Ty;
 
 /// A variable present in a substitution.
 #[derive(Clone, Copy, Debug, DisplayAttr, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -92,7 +92,7 @@ impl Ty {
 
 impl Decl<Ty> {
     /// Applies a substitution to the declaration.
-    pub(in typeck) fn apply_subst(&mut self, subst: &Substitution) {
+    pub(in crate::typeck) fn apply_subst(&mut self, subst: &Substitution) {
         for arg in &mut self.args {
             arg.apply_subst(subst);
         }
@@ -103,7 +103,7 @@ impl Decl<Ty> {
 
 impl Expr<Ty> {
     /// Applies a substitution to the expression.
-    pub(in typeck) fn apply_subst(&mut self, subst: &Substitution) {
+    pub(in crate::typeck) fn apply_subst(&mut self, subst: &Substitution) {
         match self {
             Expr::If(c, t, e, ty) => {
                 c.apply_subst(subst);

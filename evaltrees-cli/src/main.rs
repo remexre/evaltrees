@@ -26,7 +26,7 @@ use evaltrees::typeck::typeck;
 use failure::Error;
 use structopt::StructOpt;
 
-use options::Options;
+use crate::options::Options;
 
 fn main() {
     let options = Options::from_args();

@@ -1,6 +1,6 @@
-use ast::{Literal, Op, Pattern};
-use cst::{Decl, Expr};
-use repl::ReplCommand;
+use crate::ast::{Literal, Op, Pattern};
+use crate::cst::{Decl, Expr};
+use crate::repl::ReplCommand;
 
 #[test]
 fn calls() {

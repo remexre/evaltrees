@@ -1,7 +1,7 @@
 //! The functions here are clones of the ones in eval::util, but adapted for LazyExpr.
 
-use ast::{Decl, Op};
-use eval::lazy::expr::LazyExpr;
+use crate::ast::{Decl, Op};
+use crate::eval::lazy::expr::LazyExpr;
 
 pub fn reducible(expr: &LazyExpr, decls: &[Decl<()>]) -> bool {
     match *expr {

@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
-use ast::Pattern;
+use crate::ast::Pattern;
 
 impl<Aux> Display for Pattern<Aux> {
     fn fmt(&self, fmt: &mut Formatter) -> FmtResult {

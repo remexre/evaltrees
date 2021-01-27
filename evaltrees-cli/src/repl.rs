@@ -12,7 +12,7 @@ use symbol::Symbol;
 pub fn run(
     mut decls: Vec<Decl<Type>>,
     mut print_style: PrintStyle,
-    mut make_evaluator: fn(Vec<Decl<()>>) -> Box<Evaluator>,
+    mut make_evaluator: fn(Vec<Decl<()>>) -> Box<dyn Evaluator>,
 ) -> Result<(), Error> {
     let iface = Interface::new("evaltrees")?;
     iface.set_prompt("> ")?;
@@ -46,7 +46,7 @@ fn repl_one<T: Terminal>(
     iface: &Interface<T>,
     line: &str,
     decls: &mut Vec<Decl<Type>>,
-    make_evaluator: &mut fn(Vec<Decl<()>>) -> Box<Evaluator>,
+    make_evaluator: &mut fn(Vec<Decl<()>>) -> Box<dyn Evaluator>,
     print_style: &mut PrintStyle,
 ) -> Result<bool, Error> {
     match line.parse()? {

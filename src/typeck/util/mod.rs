@@ -7,9 +7,9 @@ use std::hash::Hash;
 use petgraph::{algo::kosaraju_scc, Graph};
 use symbol::Symbol;
 
-use ast::Decl;
-pub use typeck::util::annot_env::AnnotEnv;
-pub use typeck::util::unreify_env::UnreifyEnv;
+use crate::ast::Decl;
+pub use crate::typeck::util::annot_env::AnnotEnv;
+pub use crate::typeck::util::unreify_env::UnreifyEnv;
 
 /// Collects the values into collections by a key.
 pub fn group<F, K, II, T>(vals: II, get_key: F) -> HashMap<K, Vec<T>>

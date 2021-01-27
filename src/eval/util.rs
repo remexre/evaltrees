@@ -2,7 +2,7 @@
 
 use std::collections::BTreeSet;
 
-use ast::{Decl, Expr, Op};
+use crate::ast::{Decl, Expr, Op};
 
 /// Returns whether the given expression is reducible, given the decls in scope.
 pub fn reducible<Aux>(expr: &Expr<Aux>, decls: &[Decl<Aux>]) -> bool {

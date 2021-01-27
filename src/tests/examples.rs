@@ -1,10 +1,10 @@
 use std::fs::File;
 use std::io::Read;
 
-use ast::{Decl, PrintStyle};
-use cst::{parse_decls, Expr as CstExpr};
-use eval::{CallByName, CallByValue, Evaluator, LazyEvaluation};
-use typeck::typeck;
+use crate::ast::{Decl, PrintStyle};
+use crate::cst::{parse_decls, Expr as CstExpr};
+use crate::eval::{CallByName, CallByValue, Evaluator, LazyEvaluation};
+use crate::typeck::typeck;
 
 /// The "harness" for testing an evaluator.
 pub fn test_evaluator<E: Evaluator>(

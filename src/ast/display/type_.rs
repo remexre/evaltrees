@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
-use ast::Type;
+use crate::ast::Type;
 
 impl Display for Type {
     fn fmt(&self, fmt: &mut Formatter) -> FmtResult {

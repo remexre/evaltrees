@@ -2,8 +2,8 @@ use std::cmp::Ordering;
 use std::collections::BTreeSet;
 use std::iter::once;
 
-use ast::{Decl, Expr, Literal, Op, Pattern};
-use typeck::ty::Ty;
+use crate::ast::{Decl, Expr, Literal, Op, Pattern};
+use crate::typeck::ty::Ty;
 
 /// A constraint, which holds two types equal.
 ///
@@ -43,7 +43,7 @@ impl PartialOrd for Constraint {
 
 impl Decl<Ty> {
     /// Collects type constraints.
-    pub(in typeck) fn collect_constraints(&self) -> BTreeSet<Constraint> {
+    pub(in crate::typeck) fn collect_constraints(&self) -> BTreeSet<Constraint> {
         let mut ty = self.body.aux();
         for arg in self.args.iter().rev() {
             ty = Ty::Func(Box::new(arg.aux()), Box::new(ty));
@@ -60,7 +60,7 @@ impl Decl<Ty> {
 
 impl Expr<Ty> {
     /// Collects type constraints.
-    pub(in typeck) fn collect_constraints(&self) -> BTreeSet<Constraint> {
+    pub(in crate::typeck) fn collect_constraints(&self) -> BTreeSet<Constraint> {
         match *self {
             Expr::If(ref c, ref t, ref e, ref ty) => vec![
                 Constraint(c.aux(), Ty::Bool),

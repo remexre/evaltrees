@@ -1,6 +1,6 @@
 use std::rc::Rc;
 
-use typeck::subst::SubstVar;
+use crate::typeck::subst::SubstVar;
 
 /// A lexical environment used when unreifying types.
 ///

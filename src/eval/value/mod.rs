@@ -4,8 +4,8 @@ mod tests;
 
 use failure::{err_msg, Error};
 
-use ast::{Decl, Expr, Literal, Op, PrintStyle};
-use eval::{
+use crate::ast::{Decl, Expr, Literal, Op, PrintStyle};
+use crate::eval::{
     util::{beta_number, reducible},
     value::apply::apply,
     Evaluator,

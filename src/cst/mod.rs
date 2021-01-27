@@ -35,8 +35,8 @@ mod parser;
 
 use symbol::Symbol;
 
-use ast::{Literal, Op, Pattern};
-pub use cst::parser::parse_decls;
+use crate::ast::{Literal, Op, Pattern};
+pub use crate::cst::parser::parse_decls;
 
 /// A function or value declaration.
 #[derive(Clone, Debug, PartialEq)]

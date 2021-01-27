@@ -3,8 +3,8 @@ use std::rc::Rc;
 use either::{Either, Left, Right};
 use symbol::Symbol;
 
-use ast::Type;
-use typeck::ty::Ty;
+use crate::ast::Type;
+use crate::typeck::ty::Ty;
 
 /// A lexical environment used when assigning type variables.
 ///

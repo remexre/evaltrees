@@ -1,4 +1,4 @@
-use ast::Type;
+use crate::ast::Type;
 
 #[test]
 fn type_forall_precedence() {
