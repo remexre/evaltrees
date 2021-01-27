@@ -1,5 +1,6 @@
 use std::collections::BTreeSet;
 
+use failure::Fail;
 use symbol::Symbol;
 
 use crate::ast::{Decl, Expr, Literal, Op, Pattern};
@@ -10,7 +11,10 @@ use crate::cst::{Decl as CstDecl, Expr as CstExpr};
 /// or invalid semantics.
 #[derive(Clone, Debug, Fail, PartialEq)]
 pub enum ASTConversionError {
-    #[fail(display = "Found duplicate variable `{}' in arguments to `{}'.", _1, _0)]
+    #[fail(
+        display = "Found duplicate variable `{}' in arguments to `{}'.",
+        _1, _0
+    )]
     DuplicateArgVar(Symbol, Symbol),
 }
 
@@ -20,11 +24,13 @@ pub fn check_args<Aux>(args: &[Pattern<Aux>]) -> Result<(), Symbol> {
 
     fn check_arg<Aux>(vars: &mut BTreeSet<Symbol>, arg: &Pattern<Aux>) -> Result<(), Symbol> {
         match *arg {
-            Pattern::Binding(n, _) => if vars.insert(n) {
-                Ok(())
-            } else {
-                Err(n)
-            },
+            Pattern::Binding(n, _) => {
+                if vars.insert(n) {
+                    Ok(())
+                } else {
+                    Err(n)
+                }
+            }
             Pattern::Cons(ref l, ref r, _) => {
                 check_arg(vars, l)?;
                 check_arg(vars, r)

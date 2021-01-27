@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+use display_attr::DisplayAttr;
+
 use crate::ast::{Decl, Expr, Pattern};
 use crate::typeck::ty::Ty;
 
@@ -12,7 +14,7 @@ pub struct SubstVar(usize);
 impl SubstVar {
     /// Generates a fresh variable.
     pub fn fresh() -> SubstVar {
-        lazy_static! {
+        lazy_static::lazy_static! {
             pub static ref NEXT: AtomicUsize = AtomicUsize::default();
         }
         let n = NEXT.fetch_add(1, Ordering::SeqCst);

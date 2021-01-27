@@ -34,7 +34,7 @@ pub fn run(
             Ok(true) => {}
             Ok(false) => break Ok(()),
             Err(err) => {
-                error!("{}", err);
+                log::error!("{}", err);
             }
         }
         iface.add_history_unique(line);

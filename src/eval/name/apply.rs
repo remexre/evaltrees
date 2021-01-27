@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use failure::Error;
+use failure::{bail, Error};
 use symbol::Symbol;
 
 use crate::ast::{Decl, Expr, Literal, Op, Pattern};

@@ -1,17 +1,3 @@
-extern crate evaltrees;
-#[macro_use]
-extern crate failure;
-#[cfg(not(debug_assertions))]
-#[macro_use]
-extern crate human_panic;
-extern crate linefeed;
-#[macro_use]
-extern crate log;
-extern crate stderrlog;
-#[macro_use]
-extern crate structopt;
-extern crate symbol;
-
 mod options;
 mod plain;
 mod repl;
@@ -37,20 +23,20 @@ fn main() {
         let mut first = true;
         let num_errs = err.iter_chain().count();
         if num_errs <= 1 {
-            error!("{}", err);
+            log::error!("{}", err);
         } else {
             for cause in err.iter_chain() {
                 if first {
                     first = false;
-                    error!("           {}", cause);
+                    log::error!("           {}", cause);
                 } else {
-                    error!("caused by: {}", cause);
+                    log::error!("caused by: {}", cause);
                 }
             }
         }
         let bt = err.backtrace().to_string();
         if bt != "" {
-            debug!("{}", bt)
+            log::debug!("{}", bt)
         }
         exit(1);
     }

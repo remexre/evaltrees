@@ -2,10 +2,10 @@ use std::path::PathBuf;
 
 use evaltrees::ast::{Decl, PrintStyle};
 use evaltrees::eval::{CallByName, CallByValue, Evaluator, LazyEvaluation};
-use failure::Error;
+use failure::{bail, Error};
+use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
-#[structopt(raw(setting = "::structopt::clap::AppSettings::ColoredHelp"))]
 pub struct Options {
     /// Turns off message output.
     #[structopt(short = "q", long = "quiet")]
@@ -60,7 +60,7 @@ impl Options {
         if !self.quiet {
             let r = ::stderrlog::new().verbosity(self.verbose).init();
             if let Err(err) = r {
-                error!("Warning: logging couldn't start: {}", err);
+                log::error!("Warning: logging couldn't start: {}", err);
             }
         }
     }

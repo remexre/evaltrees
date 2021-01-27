@@ -1,9 +1,11 @@
 use std::collections::HashSet;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 
+use display_attr::DisplayAttr;
+use symbol::Symbol;
+
 use crate::ast::{Expr, Literal, Op, PrintStyle};
 use crate::cst::Expr as CstExpr;
-use symbol::Symbol;
 
 /// An expression type used only in lazy evaluation, to add the where-bound variables.
 #[derive(Clone, Debug, DisplayAttr, PartialEq)]

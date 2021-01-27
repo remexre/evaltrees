@@ -2,6 +2,7 @@ mod apply;
 #[cfg(test)]
 mod tests;
 
+use display_attr::DisplayAttr;
 use failure::{err_msg, Error};
 
 use crate::ast::{Decl, Expr, Literal, Op, PrintStyle};

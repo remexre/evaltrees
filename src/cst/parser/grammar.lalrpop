@@ -1,9 +1,11 @@
 use symbol::Symbol;
 
-use ast::{Literal, Op, Pattern, PrintStyle};
-use cst::{Decl, Expr};
-use eval::{CallByName, CallByValue, LazyEvaluation};
-use repl::ReplCommand;
+use crate::{
+    ast::{Literal, Op, Pattern, PrintStyle},
+    cst::{Decl, Expr},
+    eval::{CallByName, CallByValue, LazyEvaluation},
+    repl::ReplCommand,
+};
 
 grammar;
 
@@ -91,8 +93,8 @@ Literal: Literal = {
 
 Name: Symbol = <name: r"[a-zA-Z_][0-9a-zA-Z_']*"> => {
     if name == "_" {
-        warn!("_ is a valid variable name, not the wildcard pattern");
-        warn!("Instead, prefer _0, _1, etc.");
+        log::warn!("_ is a valid variable name, not the wildcard pattern");
+        log::warn!("Instead, prefer _0, _1, etc.");
     }
     Symbol::from(name)
 };

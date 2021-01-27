@@ -6,6 +6,7 @@ mod print;
 
 use std::collections::{BTreeMap, BTreeSet};
 
+use display_attr::DisplayAttr;
 use symbol::Symbol;
 
 pub use crate::ast::print::PrintStyle;

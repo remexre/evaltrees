@@ -11,6 +11,7 @@ mod util;
 
 use std::collections::{BTreeSet, HashSet};
 
+use failure::Fail;
 use symbol::Symbol;
 
 use crate::ast::{Decl, Type};
@@ -111,8 +112,8 @@ fn typeck_decls_with(
         .iter()
         .flat_map(|decl| decl.collect_constraints())
         .collect();
-    debug!("decls = {:?}", decls);
-    debug!("constraints = {:?}", constraints);
+    log::debug!("decls = {:?}", decls);
+    log::debug!("constraints = {:?}", constraints);
     let subst = unify(constraints)?;
 
     // Then, apply the substitution across the AST.
@@ -134,7 +135,7 @@ fn unify(constraints: BTreeSet<Constraint>) -> Result<Substitution, TypeError> {
 
     let mut subst = Substitution::new();
     while let Some(Constraint(s, t)) = constraints.pop() {
-        debug!("Applying constraint {} ~ {}...", s, t);
+        log::debug!("Applying constraint {} ~ {}...", s, t);
         if s == t {
             // Yay, nothing to do; the constraint is e.g. Int ~ Int.
         } else {

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use failure::Error;
+use failure::{format_err, Error};
 use symbol::Symbol;
 
 use crate::ast::{Decl, Expr, Pattern};

@@ -1,5 +1,7 @@
 use std::collections::BTreeSet;
 
+use display_attr::DisplayAttr;
+
 use crate::typeck::subst::SubstVar;
 
 /// A partial type, used in substitutions.
