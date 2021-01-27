@@ -71,7 +71,7 @@ impl Options {
     #[cfg(not(debug_assertions))]
     pub fn setup_panic(&self) {
         if self.verbose == 0 {
-            setup_panic!();
+            human_panic::setup_panic!();
         }
     }
 }
