@@ -5,6 +5,7 @@ members = [".", "evaltrees-cli"]
 authors = ["Nathan Ringo <remexre@gmail.com>"]
 description = "A simple term-rewriting interpreter that displays intermediate expressions."
 documentation = "https://github.com/remexre/evaltrees/tree/master/doc"
+edition = "2018"
 homepage = "https://github.com/remexre/evaltrees"
 license = "Apache-2.0/MIT"
 name = "evaltrees"

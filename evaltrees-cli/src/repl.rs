@@ -1,5 +1,4 @@
 use std::io::Error as IoError;
-use std::mem::replace;
 
 use evaltrees::ast::{Decl, PrintStyle, Type};
 use evaltrees::eval::Evaluator;
@@ -58,7 +57,7 @@ fn repl_one<T: Terminal>(
                 |d| d.map_aux(|_ty| ()),
             );
             same_name.push(decl);
-            replace(decls, typeck(same_name, diff_name)?);
+            *decls = typeck(same_name, diff_name)?;
             Ok(true)
         }
         ReplCommand::Evaluator(e) => {
