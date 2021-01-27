@@ -1,7 +1,7 @@
 evaltrees
 =========
 
-[![Build Status](https://travis-ci.org/remexre/evaltrees.svg?branch=master)](https://travis-ci.org/remexre/evaltrees) [![Dependency Status](https://deps.rs/repo/github/remexre/evaltrees/status.svg)](https://deps.rs/repo/github/remexre/evaltrees)
+[![Build Status](https://travis-ci.com/remexre/evaltrees.svg?branch=master)](https://travis-ci.com/remexre/evaltrees) [![Dependency Status](https://deps.rs/repo/github/remexre/evaltrees/status.svg)](https://deps.rs/repo/github/remexre/evaltrees)
 
 A simple functional language, and a small-step interpreter for it. Additionally, shows the evaluation of the "main expression" as it proceeds. Intended as an instructional aid for CSCI2041 at the University of Minnesota.
 
