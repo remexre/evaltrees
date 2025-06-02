@@ -9,7 +9,7 @@ use std::process::exit;
 use evaltrees::ast::Decl;
 use evaltrees::cst::{parse_decls, Expr as CstExpr};
 use evaltrees::typeck::typeck;
-use failure::Error;
+use anyhow::Error; // Changed from failure::Error
 use structopt::StructOpt;
 
 use crate::options::Options;
@@ -20,29 +20,14 @@ fn main() {
     options.setup_panic();
 
     if let Err(err) = run(options) {
-        let mut first = true;
-        let num_errs = err.iter_chain().count();
-        if num_errs <= 1 {
-            log::error!("{}", err);
-        } else {
-            for cause in err.iter_chain() {
-                if first {
-                    first = false;
-                    log::error!("           {}", cause);
-                } else {
-                    log::error!("caused by: {}", cause);
-                }
-            }
-        }
-        let bt = err.backtrace().to_string();
-        if bt != "" {
-            log::debug!("{}", bt)
-        }
+        // anyhow::Error's default Display includes the cause chain.
+        // For debug builds or high verbosity, one might print with :? for more detail.
+        log::error!("{:?}", err);
         exit(1);
     }
 }
 
-fn run(options: Options) -> Result<(), Error> {
+fn run(options: Options) -> Result<(), Error> { // anyhow::Error
     // Load the CST of the declarations, if appropriate.
     let decls = match options.decls_path.as_ref() {
         Some(decls_path) => {

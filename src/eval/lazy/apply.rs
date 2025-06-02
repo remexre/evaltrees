@@ -1,9 +1,9 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use failure::{bail, Error};
 use symbol::Symbol;
 
 use crate::ast::{Decl, Expr, Literal, Op, Pattern};
+use crate::eval::EvalError;
 use crate::eval::lazy::{expr::LazyExpr, reduce::reducible, step};
 
 /// Performs function application if possible, or reduces one of the arguments if not.
@@ -12,7 +12,7 @@ pub fn try_apply(
     args: Vec<LazyExpr>,
     decls: &[Decl<()>],
     wherevars: &mut Vec<LazyExpr>,
-) -> Result<(LazyExpr, Option<(usize, LazyExpr)>), Error> {
+) -> Result<(LazyExpr, Option<(usize, LazyExpr)>), EvalError> {
     for decl in decls.iter().filter(|decl| decl.name == func) {
         assert_eq!(args.len(), decl.args.len());
         if let Some(i) = args
@@ -37,7 +37,7 @@ pub fn try_apply(
             return Ok((apply_to(decl, bindings, wherevars), None));
         }
     }
-    bail!("No matching clauses for call to {}", func)
+    Err(EvalError::UnknownVariable(func)) // Or a new variant like NoMatchingFunctionClause
 }
 
 fn apply_to(

@@ -103,7 +103,7 @@ macro_rules! example_test {
 
 example_test! {
     and("andl [true; true; false; true]", "false"),
-    div0("const 1 div0", Some(Err("division by zero")), Some(Ok("1")), Some(Ok("1"))),
+    div0("const 1 div0", Some(Err("Division by zero")), Some(Ok("1")), Some(Ok("1"))),
     double("doubleApp double 4", "16"),
     higher_order("map (plus 3) [1; 2; 3]", "4 :: 5 :: 6 :: []"),
     id("id id 137", "137"),

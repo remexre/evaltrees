@@ -11,8 +11,8 @@ mod util;
 
 use std::collections::{BTreeSet, HashSet};
 
-use failure::Fail;
 use symbol::Symbol;
+use thiserror::Error;
 
 use crate::ast::{Decl, Type};
 use crate::typeck::{
@@ -23,21 +23,21 @@ use crate::typeck::{
 };
 
 /// An error during typechecking.
-#[derive(Clone, Debug, Fail, PartialEq)]
+#[derive(Clone, Debug, Error, PartialEq)]
 pub enum TypeError {
     /// A constraint between two types couldn't be unified.
     // TODO: collect type errors and continue to unify (incl. on errors) to be
     // able to display multiple, and display them better?
-    #[fail(display = "Can't unify {} with {}", _0, _1)]
+    #[error("Can't unify {0} with {1}")]
     CantUnify(Ty, Ty),
 
     /// A variable was undefined. This technically isn't a type error, but the error is only found
     /// during type-checking.
-    #[fail(display = "Undefined variables: {:?}", _0)]
+    #[error("Undefined variables: {0:?}")]
     Freevars(BTreeSet<Symbol>),
 
     /// The occurs check was failed (we've got an infinite type on our hands!).
-    #[fail(display = "{} occurs within {} when solving {} ~ {}", _0, _1, _0, _1)]
+    #[error("{0} occurs within {1} when solving {0} ~ {1}")]
     Occurs(SubstVar, Ty),
 }
 

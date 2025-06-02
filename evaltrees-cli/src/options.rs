@@ -1,8 +1,8 @@
 use std::path::PathBuf;
 
+use anyhow::{anyhow, Error};
 use evaltrees::ast::{Decl, PrintStyle};
 use evaltrees::eval::{CallByName, CallByValue, Evaluator, LazyEvaluation};
-use failure::{bail, Error};
 use structopt::StructOpt;
 
 #[derive(Debug, StructOpt)]
@@ -39,10 +39,10 @@ impl Options {
             Some("lazy") => Ok(|decls| Box::new(LazyEvaluation::new(decls))),
             Some("name") => Ok(|decls| Box::new(CallByName::new(decls))),
             Some("value") | None => Ok(|decls| Box::new(CallByValue::new(decls))),
-            Some(e) => bail!(
+            Some(e) => Err(anyhow!(
                 "Unknown evaluator `{}' (valid evaluators are `lazy', `name', and `value')",
                 e
-            ),
+            )),
         }
     }
 

@@ -1,7 +1,7 @@
 use std::collections::BTreeSet;
 
-use failure::Fail;
 use symbol::Symbol;
+use thiserror::Error;
 
 use crate::ast::{Decl, Expr, Literal, Op, Pattern};
 use crate::cst::{Decl as CstDecl, Expr as CstExpr};
@@ -9,12 +9,9 @@ use crate::cst::{Decl as CstDecl, Expr as CstExpr};
 /// An error converting a concrete syntax tree to an abstract syntax tree.
 /// These, generally, are errors which are valid syntax but have ill-defined
 /// or invalid semantics.
-#[derive(Clone, Debug, Fail, PartialEq)]
+#[derive(Clone, Debug, Error, PartialEq)]
 pub enum ASTConversionError {
-    #[fail(
-        display = "Found duplicate variable `{}' in arguments to `{}'.",
-        _1, _0
-    )]
+    #[error("Found duplicate variable `{1}' in arguments to `{0}'.")]
     DuplicateArgVar(Symbol, Symbol),
 }
 

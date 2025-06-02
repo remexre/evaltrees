@@ -7,8 +7,6 @@ mod tests;
 use std::fmt::{Display, Formatter, Result as FmtResult};
 use std::mem::replace;
 
-use failure::{err_msg, Error};
-
 use crate::ast::{Decl, Literal, Op, PrintStyle};
 use crate::eval::{
     lazy::{
@@ -17,7 +15,7 @@ use crate::eval::{
         reduce::{beta_number, reducible},
     },
     util::transitive_closure,
-    Evaluator,
+    Evaluator, EvalError,
 };
 
 /// Lazy evaluation.
@@ -79,7 +77,7 @@ impl Evaluator for LazyEvaluation {
         self.print_style = print_style;
     }
 
-    fn step(&mut self) -> Result<(), Error> {
+    fn step(&mut self) -> Result<(), EvalError> {
         let (mut expr, replacement) =
             step(self.expr.take().unwrap(), &self.decls, &mut self.wherevars)?;
         if let Some((n, e)) = replacement {
@@ -99,7 +97,7 @@ fn step(
     expr: LazyExpr,
     decls: &[Decl<()>],
     wherevars: &mut Vec<LazyExpr>,
-) -> Result<(LazyExpr, Option<(usize, LazyExpr)>), Error> {
+) -> Result<(LazyExpr, Option<(usize, LazyExpr)>), EvalError> {
     let beta = beta_number(&expr, decls);
     let expr = match expr {
         LazyExpr::If(c, t, e) => match *c {
@@ -123,7 +121,7 @@ fn step(
                 args.reverse();
                 let func = match func {
                     LazyExpr::Variable(var) => var,
-                    func => panic!("Invalid callable expression: {}", func),
+                    func => return Err(EvalError::InvalidCallable(func.to_string())),
                 };
                 try_apply(func, args, decls, wherevars)?
             }
@@ -151,7 +149,7 @@ fn step(
             decls,
             |l, r| {
                 if r == 0 {
-                    Err(err_msg("division by zero"))
+                    Err(EvalError::DivisionByZero)
                 } else {
                     Ok(l / r)
                 }
@@ -165,9 +163,9 @@ fn step(
             decls,
             |l, r| {
                 if r == 0 {
-                    Err(err_msg("mod by zero"))
+                    Err(EvalError::ModuloByZero)
                 } else {
-                    Ok(l / r)
+                    Ok(l % r) // Corrected from l / r to l % r
                 }
             },
             wherevars,
@@ -175,12 +173,17 @@ fn step(
         LazyExpr::Variable(var) => {
             let decl = decls
                 .iter()
-                .find(|decl| decl.name == var)
-                .unwrap_or_else(|| panic!("Unknown variable {}", var));
-            if decl.args.is_empty() {
-                (decl.body.clone().into(), None)
-            } else {
-                (LazyExpr::Variable(var), None)
+                .find(|decl| decl.name == var);
+
+            match decl {
+                Some(d) => {
+                    if d.args.is_empty() {
+                        (d.body.clone().into(), None)
+                    } else {
+                        (LazyExpr::Variable(var), None)
+                    }
+                }
+                None => return Err(EvalError::UnknownVariable(var)),
             }
         }
         LazyExpr::WhereVar(num) => {
@@ -198,14 +201,14 @@ fn step(
     Ok(expr)
 }
 
-fn math_op<F: Fn(usize, usize) -> Result<usize, Error>>(
+fn math_op<F: Fn(usize, usize) -> Result<usize, EvalError>>(
     op: Op,
     l: Box<LazyExpr>,
     r: Box<LazyExpr>,
     decls: &[Decl<()>],
     f: F,
     wherevars: &mut Vec<LazyExpr>,
-) -> Result<(LazyExpr, Option<(usize, LazyExpr)>), Error> {
+) -> Result<(LazyExpr, Option<(usize, LazyExpr)>), EvalError> {
     if let LazyExpr::Literal(Literal::Int(ln)) = *l {
         if let LazyExpr::Literal(Literal::Int(rn)) = *r {
             f(ln, rn).map(|n| (LazyExpr::Literal(Literal::Int(n)), None))

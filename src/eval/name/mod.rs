@@ -3,11 +3,10 @@ mod apply;
 mod tests;
 
 use display_attr::DisplayAttr;
-use failure::{err_msg, Error};
 
 use crate::ast::{Decl, Expr, Literal, Op, PrintStyle};
 use crate::eval::util::{beta_number, reducible};
-use crate::eval::{name::apply::try_apply, Evaluator};
+use crate::eval::{name::apply::try_apply, Evaluator, EvalError};
 
 /// Call-by-name evaluation.
 #[derive(Debug, DisplayAttr)]
@@ -39,14 +38,14 @@ impl Evaluator for CallByName {
         self.print_style = print_style;
     }
 
-    fn step(&mut self) -> Result<(), Error> {
+    fn step(&mut self) -> Result<(), EvalError> {
         let expr = step(self.expr.take().unwrap(), &self.decls)?;
         self.expr = Some(expr);
         Ok(())
     }
 }
 
-fn step(expr: Expr<()>, decls: &[Decl<()>]) -> Result<Expr<()>, Error> {
+fn step(expr: Expr<()>, decls: &[Decl<()>]) -> Result<Expr<()>, EvalError> {
     let beta = beta_number(&expr, decls);
     let expr = match expr {
         Expr::If(c, t, e, ()) => match *c {
@@ -67,7 +66,7 @@ fn step(expr: Expr<()>, decls: &[Decl<()>]) -> Result<Expr<()>, Error> {
                 args.reverse();
                 let func = match func {
                     Expr::Variable(var, _) => var,
-                    func => panic!("Invalid callable expression: {}", func),
+                    func => return Err(EvalError::InvalidCallable(func.to_string())),
                 };
                 try_apply(func, args, decls)?
             }
@@ -85,40 +84,41 @@ fn step(expr: Expr<()>, decls: &[Decl<()>]) -> Result<Expr<()>, Error> {
         Expr::Op(Op::Mul, l, r, ()) => math_op(Op::Mul, l, r, decls, |l, r| Ok(l * r))?,
         Expr::Op(Op::Div, l, r, ()) => math_op(Op::Div, l, r, decls, |l, r| {
             if r == 0 {
-                Err(err_msg("division by zero"))
+                Err(EvalError::DivisionByZero)
             } else {
                 Ok(l / r)
             }
         })?,
         Expr::Op(Op::Mod, l, r, ()) => math_op(Op::Mod, l, r, decls, |l, r| {
             if r == 0 {
-                Err(err_msg("mod by zero"))
+                Err(EvalError::ModuloByZero)
             } else {
                 Ok(l % r)
             }
         })?,
         Expr::Variable(var, ()) => {
-            let decl = decls
-                .iter()
-                .find(|decl| decl.name == var)
-                .unwrap_or_else(|| panic!("Unknown variable {}", var));
-            if decl.args.is_empty() {
-                decl.body.clone()
-            } else {
-                Expr::Variable(var, ())
+            match decls.iter().find(|d| d.name == var) {
+                Some(decl) => {
+                    if decl.args.is_empty() {
+                        decl.body.clone()
+                    } else {
+                        Expr::Variable(var, ())
+                    }
+                }
+                None => return Err(EvalError::UnknownVariable(var)),
             }
         }
     };
     Ok(expr)
 }
 
-fn math_op<F: Fn(usize, usize) -> Result<usize, Error>>(
+fn math_op<F: Fn(usize, usize) -> Result<usize, EvalError>>(
     op: Op,
     l: Box<Expr<()>>,
     r: Box<Expr<()>>,
     decls: &[Decl<()>],
     f: F,
-) -> Result<Expr<()>, Error> {
+) -> Result<Expr<()>, EvalError> {
     if let Expr::Literal(Literal::Int(ln), _) = *l {
         if let Expr::Literal(Literal::Int(rn), _) = *r {
             f(ln, rn).map(|n| Expr::Literal(Literal::Int(n), ()))

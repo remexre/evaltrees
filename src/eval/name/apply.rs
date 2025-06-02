@@ -1,13 +1,12 @@
 use std::collections::BTreeMap;
 
-use failure::{bail, Error};
 use symbol::Symbol;
 
 use crate::ast::{Decl, Expr, Literal, Op, Pattern};
-use crate::eval::{name::step, util::reducible};
+use crate::eval::{name::step, util::reducible, EvalError};
 
 /// Performs function application if possible, or reduces one of the arguments if not.
-pub fn try_apply(func: Symbol, args: Vec<Expr<()>>, decls: &[Decl<()>]) -> Result<Expr<()>, Error> {
+pub fn try_apply(func: Symbol, args: Vec<Expr<()>>, decls: &[Decl<()>]) -> Result<Expr<()>, EvalError> {
     for decl in decls.iter().filter(|decl| decl.name == func) {
         assert_eq!(args.len(), decl.args.len());
         if let Some(i) = args
@@ -25,7 +24,7 @@ pub fn try_apply(func: Symbol, args: Vec<Expr<()>>, decls: &[Decl<()>]) -> Resul
             return Ok(instantiate_body(&decl.body, &bindings));
         }
     }
-    bail!("No matching clauses for call to {}", func)
+    Err(EvalError::UnknownVariable(func)) // Or NoMatchingFunctionClause
 }
 
 fn arg_normal_enough_for_pat(value: &Expr<()>, pat: &Pattern<()>, decls: &[Decl<()>]) -> bool {

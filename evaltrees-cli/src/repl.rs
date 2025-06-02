@@ -1,10 +1,10 @@
 use std::io::Error as IoError;
 
+use anyhow::Error; // Changed from failure::Error
 use evaltrees::ast::{Decl, PrintStyle, Type};
 use evaltrees::eval::Evaluator;
 use evaltrees::repl::ReplCommand;
 use evaltrees::typeck::typeck;
-use failure::Error;
 use linefeed::{reader::ReadResult, Interface, Terminal};
 use symbol::Symbol;
 
@@ -12,7 +12,7 @@ pub fn run(
     mut decls: Vec<Decl<Type>>,
     mut print_style: PrintStyle,
     mut make_evaluator: fn(Vec<Decl<()>>) -> Box<dyn Evaluator>,
-) -> Result<(), Error> {
+) -> Result<(), Error> { // anyhow::Error
     let iface = Interface::new("evaltrees")?;
     iface.set_prompt("> ")?;
     print_decls(&iface, &decls, print_style)?;
@@ -47,7 +47,7 @@ fn repl_one<T: Terminal>(
     decls: &mut Vec<Decl<Type>>,
     make_evaluator: &mut fn(Vec<Decl<()>>) -> Box<dyn Evaluator>,
     print_style: &mut PrintStyle,
-) -> Result<bool, Error> {
+) -> Result<bool, Error> { // anyhow::Error
     match line.parse()? {
         ReplCommand::Decl(decl) => {
             let decl = decl.into_ast()?;

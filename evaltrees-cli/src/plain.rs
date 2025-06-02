@@ -1,5 +1,5 @@
+use anyhow::Error; // Changed from failure::Error
 use evaltrees::ast::{Decl, PrintStyle, Type};
-use failure::Error;
 use symbol::Symbol;
 
 use crate::options::Options;

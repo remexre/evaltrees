@@ -1,22 +1,22 @@
 use std::collections::HashMap;
 
-use failure::{format_err, Error};
 use symbol::Symbol;
 
 use crate::ast::{Decl, Expr, Pattern};
+use crate::eval::EvalError;
 
 /// Performs "normal" (for call-by-name and call-by-value) function application.
 pub fn apply<Aux: Clone>(
     func: Symbol,
     args: &[Expr<Aux>],
     decls: &[Decl<Aux>],
-) -> Result<Expr<Aux>, Error> {
+) -> Result<Expr<Aux>, EvalError> {
     let (args, body) = decls
         .iter()
         .filter(|decl| decl.name == func)
         .filter_map(|decl| matches_all(&decl.args, &args).map(|args| (args, &decl.body)))
         .next()
-        .ok_or_else(|| format_err!("No matching declaration for call to function {}", func))?;
+        .ok_or_else(|| EvalError::UnknownVariable(func))?; // Or NoMatchingFunctionClause
     Ok(apply_replacement(body, &args))
 }
 

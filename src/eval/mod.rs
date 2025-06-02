@@ -1,5 +1,6 @@
 //! Evaluation and evaluators.
 
+mod error;
 mod lazy;
 mod name;
 pub mod util;
@@ -7,9 +8,8 @@ mod value;
 
 use std::fmt::Display;
 
-use failure::Error;
-
 use crate::ast::PrintStyle;
+pub use crate::eval::error::EvalError;
 pub use crate::eval::lazy::LazyEvaluation;
 pub use crate::eval::name::CallByName;
 pub use crate::eval::value::CallByValue;
@@ -27,10 +27,10 @@ pub trait Evaluator: Display {
     fn set_print_style(&mut self, print_style: PrintStyle);
 
     /// Performs a single reduction step.
-    fn step(&mut self) -> Result<(), Error>;
+    fn step(&mut self) -> Result<(), EvalError>;
 
     /// Performs *n* steps.
-    fn step_many(&mut self, mut n: usize) -> Result<(), Error> {
+    fn step_many(&mut self, mut n: usize) -> Result<(), EvalError> {
         while !self.normal_form() && n > 0 {
             self.step()?;
             n -= 1;
