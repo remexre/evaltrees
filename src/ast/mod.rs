@@ -10,6 +10,7 @@ use display_attr::DisplayAttr;
 use symbol::Symbol;
 
 pub use crate::ast::print::PrintStyle;
+pub use crate::ast::convert::ASTConversionError; // Re-export ASTConversionError
 
 /// A function or value declaration.
 #[derive(Clone, Debug, PartialEq)]

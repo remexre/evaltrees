@@ -1,21 +1,22 @@
-use std::io::Error as IoError;
+use std::io::Error as IoError; // Keep for print_decls, but Error type below will be CliError
 
-use anyhow::Error; // Changed from failure::Error
 use evaltrees::ast::{Decl, PrintStyle, Type};
 use evaltrees::eval::Evaluator;
 use evaltrees::repl::ReplCommand;
 use evaltrees::typeck::typeck;
-use linefeed::{reader::ReadResult, Interface, Terminal};
+use linefeed::{reader::ReadResult, Interface, Terminal, DefaultTerminal}; // Added DefaultTerminal for Interface type
 use symbol::Symbol;
+
+use crate::CliError;
 
 pub fn run(
     mut decls: Vec<Decl<Type>>,
     mut print_style: PrintStyle,
     mut make_evaluator: fn(Vec<Decl<()>>) -> Box<dyn Evaluator>,
-) -> Result<(), Error> { // anyhow::Error
-    let iface = Interface::new("evaltrees")?;
+) -> Result<(), CliError> {
+    let iface = Interface::<DefaultTerminal>::new("evaltrees")?; // Explicit terminal type
     iface.set_prompt("> ")?;
-    print_decls(&iface, &decls, print_style)?;
+    print_decls(&iface, &decls, print_style)?; // This still returns io::Error, handled by ? into CliError
     loop {
         let line = match iface.read_line()? {
             ReadResult::Input(line) => line,
@@ -47,17 +48,17 @@ fn repl_one<T: Terminal>(
     decls: &mut Vec<Decl<Type>>,
     make_evaluator: &mut fn(Vec<Decl<()>>) -> Box<dyn Evaluator>,
     print_style: &mut PrintStyle,
-) -> Result<bool, Error> { // anyhow::Error
-    match line.parse()? {
+) -> Result<bool, CliError> {
+    match line.parse::<ReplCommand>()? { // Explicit type for parse, From handles ParseError
         ReplCommand::Decl(decl) => {
-            let decl = decl.into_ast()?;
+            let decl = decl.into_ast()?; // From handles ASTConversionError
             let (diff_name, mut same_name) = split_vec(
                 decls.clone(),
                 |d| d.name == decl.name,
                 |d| d.map_aux(|_ty| ()),
             );
             same_name.push(decl);
-            *decls = typeck(same_name, diff_name)?;
+            *decls = typeck(same_name, diff_name)?; // From handles TypeError
             Ok(true)
         }
         ReplCommand::Evaluator(e) => {
@@ -69,19 +70,19 @@ fn repl_one<T: Terminal>(
                 vec![Decl {
                     name: "".into(),
                     args: vec![],
-                    body: expr.into_ast()?,
+                    body: expr.into_ast()?, // From handles ASTConversionError
                     aux: (),
                 }],
                 decls.clone(),
-            )?;
+            )?; // From handles TypeError
 
             let mut evaluator =
                 make_evaluator(decls.into_iter().map(|d| d.map_aux(|_| ())).collect());
             evaluator.set_print_style(*print_style);
             loop {
                 if !evaluator.normal_form() {
-                    evaluator.step()?;
-                    writeln!(iface, "{}", evaluator)?;
+                    evaluator.step()?; // From handles EvalError
+                    writeln!(iface, "{}", evaluator)?; // From handles io::Error
                 } else {
                     break Ok(true);
                 }
@@ -109,12 +110,12 @@ fn repl_one<T: Terminal>(
                 vec![Decl {
                     name: "".into(),
                     args: vec![],
-                    body: expr.into_ast()?,
+                    body: expr.into_ast()?, // From handles ASTConversionError
                     aux: (),
                 }],
                 decls.clone(),
-            )?;
-            let decl = decls.iter().find(|decl| decl.name == "").unwrap();
+            )?; // From handles TypeError
+            let decl = decls.iter().find(|decl| decl.name == "").unwrap(); // panic is ok for test code / internal logic
             writeln!(
                 iface,
                 "{} : {}",

@@ -1,9 +1,10 @@
 use std::path::PathBuf;
 
-use anyhow::{anyhow, Error};
 use evaltrees::ast::{Decl, PrintStyle};
 use evaltrees::eval::{CallByName, CallByValue, Evaluator, LazyEvaluation};
 use structopt::StructOpt;
+
+use crate::CliError; // Assuming CliError is pub use'd from main.rs or error.rs
 
 #[derive(Debug, StructOpt)]
 pub struct Options {
@@ -34,15 +35,15 @@ pub struct Options {
 
 impl Options {
     /// Creates an evaluator for the given declarations as set by the flags.
-    pub fn make_evaluator(&self) -> Result<fn(Vec<Decl<()>>) -> Box<dyn Evaluator>, Error> {
+    pub fn make_evaluator(&self) -> Result<fn(Vec<Decl<()>>) -> Box<dyn Evaluator>, CliError> {
         match self.evaluator.as_ref().map(|s| s as &str) {
             Some("lazy") => Ok(|decls| Box::new(LazyEvaluation::new(decls))),
             Some("name") => Ok(|decls| Box::new(CallByName::new(decls))),
             Some("value") | None => Ok(|decls| Box::new(CallByValue::new(decls))),
-            Some(e) => Err(anyhow!(
+            Some(e) => Err(CliError::ArgumentParsing(format!(
                 "Unknown evaluator `{}' (valid evaluators are `lazy', `name', and `value')",
                 e
-            )),
+            ))),
         }
     }
 

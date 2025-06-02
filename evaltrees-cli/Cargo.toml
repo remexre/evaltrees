@@ -7,7 +7,6 @@ name = "evaltrees-cli"
 version = "0.1.0"
 
 [dependencies]
-anyhow = "1"
 evaltrees = { path = ".." }
 human-panic = "1.0.0"
 linefeed = "0.6.0"

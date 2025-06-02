@@ -1,10 +1,10 @@
-use anyhow::Error; // Changed from failure::Error
 use evaltrees::ast::{Decl, PrintStyle, Type};
 use symbol::Symbol;
 
 use crate::options::Options;
+use crate::CliError;
 
-pub fn run(mut decls: Vec<Decl<Type>>, options: &Options) -> Result<(), Error> {
+pub fn run(mut decls: Vec<Decl<Type>>, options: &Options) -> Result<(), CliError> {
     decls.sort_by_key(|decl| decl.name);
 
     print_decls(&decls, options.print_style());
